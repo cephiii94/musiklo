@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>meemusic - Dengarkan Musik Favoritmu</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo">
+            <a href="#" id="logo-link"><h1>meemusic</h1></a>
+        </div>
+        <div class="search-bar">
+            <input type="search" id="search-input" placeholder="Cari lagu atau artis...">
+            <button id="search-button">Cari</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="playlist-section">
+            <h2>Top Charts Hari Ini</h2>
+            <div id="song-list-container" class="song-grid">
+                </div>
+
+                <div class="show-all-container">
+                <button id="show-all-button">Lihat Semua</button>
+                <button id="hide-button" class="hidden">Sembunyikan</button>    </div>
+
+        </section>
+    </main>
+
+    <div id="expanded-player" class="hidden">
+        <button id="close-expanded-player" class="close-btn">&times;</button>
+        <div class="player-content">
+            <img id="expanded-player-art" src="placeholder.png" alt="Album Art">
+            <h2 id="expanded-player-title">Judul Lagu</h2>
+            <p id="expanded-player-artist">Nama Artis</p>
+        </div>
+    </div>
+
+    <footer class="player-container">
+        <div class="current-track-info">
+            <img id="current-track-art" src="placeholder.png" alt="Album Art">
+            <div class="track-details">
+                <p id="current-track-title">Pilih sebuah lagu</p>
+                <p id="current-track-artist">meemusic</p>
+            </div>
+        </div>
+        <div class="player-controls">
+            <button id="prev-button">⏮️</button>
+            <button id="play-pause-button">▶️</button>
+            <button id="next-button">⏭️</button>
+        </div>
+        <div class="progress-volume-controls">
+             <input type="range" id="progress-bar" value="0" step="1">
+             <div class="volume-control">
+                <span>🔊</span>
+                <input type="range" id="volume-bar" min="0" max="100" value="80">
+            </div>
+        </div>
+    </footer>
+
+    <div id="youtube-player" style="display: none;"></div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="app.js"></script>
+
+
+    </body>
+</html>
