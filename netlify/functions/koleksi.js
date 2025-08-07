@@ -1,16 +1,18 @@
 // netlify/functions/koleksi.js
 require('dotenv').config();
 const axios = require('axios');
-const path = require('path');
-const fs = require('fs').promises;
 
-const KOLEKSI_LINKS_PATH = path.join(__dirname, 'koleksi_links.json');
+// Hapus/komentari baris berikut:
+// const path = require('path');
+// const fs = require('fs').promises;
+// const KOLEKSI_LINKS_PATH = path.join(__dirname, 'koleksi_links.json');
+
+// Ganti dengan require langsung:
+const videoLinks = require('./koleksi_links.json');
+
 exports.handler = async function (event, context) {
     console.log('Membangun Koleksi dari file link (versi aman).');
     try {
-        const data = await fs.readFile(KOLEKSI_LINKS_PATH, 'utf-8');
-        const videoLinks = JSON.parse(data);
-
         const koleksiPromises = videoLinks.map(link => {
             const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(link)}&format=json`;
             return axios.get(oembedUrl);
