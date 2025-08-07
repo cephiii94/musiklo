@@ -4,7 +4,7 @@ const axios = require('axios');
 const path = require('path');
 const fs = require('fs').promises;
 
-const KOLEKSI_LINKS_PATH = path.resolve(__dirname, 'koleksi_links.json');
+const KOLEKSI_LINKS_PATH = path.join(process.cwd(), 'koleksi', 'koleksi_links.json');
 exports.handler = async function (event, context) {
     console.log('Membangun Koleksi dari file link (versi aman).');
     try {
