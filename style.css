@@ -89,6 +89,10 @@ main {
     color: var(--text-primary);
 }
 
+.playlist-section + .playlist-section {
+    margin-top: 2rem;
+}
+
 .song-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));

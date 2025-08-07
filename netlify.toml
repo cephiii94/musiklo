@@ -1,0 +1,11 @@
+[build]
+  # Karena kita tidak punya langkah build (seperti React/Vue), kita bisa biarkan kosong atau beri perintah sederhana.
+  command = "echo 'No build command'"
+  # Folder tempat file publik kita (HTML, CSS, JS) berada.
+  publish = "."
+  # Folder tempat kita akan menyimpan Netlify Functions kita.
+  functions = "netlify/functions"
+
+[dev]
+  # Port untuk menjalankan server lokal Netlify
+  port = 8888

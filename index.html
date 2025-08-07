@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>meemusic - Dengarkan Musik Favoritmu</title>
+    <title>musiklo - Dengarkan Musik Favoritmu</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
 
     <header class="main-header">
         <div class="logo">
-            <a href="#" id="logo-link"><h1>meemusic</h1></a>
+            <a href="#" id="logo-link"><h1>musiklo</h1></a>
         </div>
         <div class="search-bar">
             <input type="search" id="search-input" placeholder="Cari lagu atau artis...">
@@ -26,12 +26,18 @@
             <h2>Top Charts Hari Ini</h2>
             <div id="song-list-container" class="song-grid">
                 </div>
-
                 <div class="show-all-container">
                 <button id="show-all-button">Lihat Semua</button>
-                <button id="hide-button" class="hidden">Sembunyikan</button>    </div>
-
+                <button id="hide-button" class="hidden">Sembunyikan</button>    
+            </div>
         </section>
+
+        <section class="playlist-section">
+            <h2>Koleksi Lagu Spesial</h2>
+            <div id="koleksi-lagu-container" class="song-grid">
+                </div>
+        </section>
+
     </main>
 
     <div id="expanded-player" class="hidden">
@@ -48,7 +54,7 @@
             <img id="current-track-art" src="placeholder.png" alt="Album Art">
             <div class="track-details">
                 <p id="current-track-title">Pilih sebuah lagu</p>
-                <p id="current-track-artist">meemusic</p>
+                <p id="current-track-artist">musiklo/p>
             </div>
         </div>
         <div class="player-controls">
