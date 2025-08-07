@@ -1,0 +1,56 @@
+// netlify/functions/koleksi.js
+require('dotenv').config();
+const axios = require('axios');
+const path = require('path');
+const fs = require('fs').promises;
+
+// Karena kita deploy, kita perlu cara yang benar untuk menunjuk ke file
+// __dirname akan menunjuk ke folder fungsi saat dijalankan di Netlify
+const KOLEKSI_LINKS_PATH = path.resolve(__dirname, '../../koleksi_links.json');
+
+exports.handler = async function (event, context) {
+    console.log('Membangun Koleksi dari file link (via Netlify Function).');
+    try {
+        const data = await fs.readFile(KOLEKSI_LINKS_PATH, 'utf-8');
+        const videoLinks = JSON.parse(data);
+
+        const koleksiPromises = videoLinks.map(link => {
+            const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(link)}&format=json`;
+            return axios.get(oembedUrl);
+        });
+
+        const results = await Promise.allSettled(koleksiPromises);
+
+        const koleksiLengkap = results
+            .filter((result, index) => {
+                if (result.status === 'rejected') {
+                    console.error(`Gagal mengambil oEmbed untuk LINK: ${videoLinks[index]}. Alasan: ${result.reason.message}`);
+                    return false;
+                }
+                return true;
+            })
+            .map(result => {
+                const oembedData = result.value.data;
+                const urlParams = new URL(oembedData.thumbnail_url).pathname.split('/');
+                const videoIdFromThumb = urlParams[2];
+
+                return {
+                    videoId: videoIdFromThumb,
+                    title: oembedData.title,
+                    artist: oembedData.author_name,
+                    thumbnailUrl: oembedData.thumbnail_url
+                };
+            });
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(koleksiLengkap)
+        };
+    } catch (error) {
+        console.error('Error di function koleksi:', error.message);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ message: 'Gagal membangun daftar koleksi.' })
+        };
+    }
+};

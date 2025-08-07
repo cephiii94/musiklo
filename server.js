@@ -4,7 +4,7 @@ const express = require('express');
 const axios = require('axios');
 const NodeCache = require('node-cache');
 const path = require('path');
-const fs = require('fs').promises; // Diperlukan untuk membaca file
+const fs = require('fs').promises;
 
 // === 2. INISIALISASI ===
 const app = express();
@@ -19,7 +19,6 @@ const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 
 
 // === 3. MIDDLEWARE ===
-// Menyajikan file statis seperti index.html, app.js, dll.
 app.use(express.static(path.join(__dirname, '')));
 
 // === 4. ENDPOINT API ===
@@ -63,7 +62,7 @@ app.get('/api/topcharts', async (req, res) => {
 });
 
 
-// Endpoint untuk mengambil dan membangun koleksi lagu (versi tangguh)
+// Endpoint untuk mengambil dan membangun koleksi lagu dari LINK LENGKAP
 app.get('/api/koleksi', async (req, res) => {
     const cacheKey = 'koleksi_lokal_oembed';
 
@@ -72,34 +71,31 @@ app.get('/api/koleksi', async (req, res) => {
         return res.json(koleksiCache.get(cacheKey));
     }
 
-    console.log('Membangun Koleksi dari file IDs dan oEmbed...');
+    console.log('Membangun Koleksi dari file link dan oEmbed...');
     try {
-        const data = await fs.readFile(path.join(__dirname, 'koleksi_ids.json'), 'utf-8');
-        const videoIds = JSON.parse(data);
+        // Baca file berisi LINK LENGKAP
+        const data = await fs.readFile(path.join(__dirname, 'koleksi_links.json'), 'utf-8');
+        const videoLinks = JSON.parse(data);
 
-        const koleksiPromises = videoIds.map(id => {
-            const oembedUrl = `https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${id}&format=json`;
+        // Buat promise untuk setiap link
+        const koleksiPromises = videoLinks.map(link => {
+            // Gunakan encodeURIComponent untuk URL yang menjadi parameter
+            const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(link)}&format=json`;
             return axios.get(oembedUrl);
         });
 
-        // Menggunakan Promise.allSettled untuk menangani jika ada error individual
         const results = await Promise.allSettled(koleksiPromises);
 
-        // Filter hasil untuk hanya mengambil yang sukses (status 'fulfilled')
         const koleksiLengkap = results
             .filter((result, index) => {
                 if (result.status === 'rejected') {
-                    // Beri tahu di log server ID mana yang gagal
-                    console.error(`Gagal mengambil oEmbed untuk ID: ${videoIds[index]}. Alasan: ${result.reason.message}`);
-                    return false; // Abaikan yang gagal
+                    console.error(`Gagal mengambil oEmbed untuk LINK: ${videoLinks[index]}. Alasan: ${result.reason.message}`);
+                    return false;
                 }
-                return true; // Ambil yang sukses
+                return true;
             })
             .map(result => {
-                // Struktur data yang dikembalikan oEmbed
                 const oembedData = result.value.data;
-                
-                // Ekstrak videoId dari URL thumbnail untuk kepastian
                 const urlParams = new URL(oembedData.thumbnail_url).pathname.split('/');
                 const videoIdFromThumb = urlParams[2];
 

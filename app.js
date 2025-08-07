@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function onPlayerStateChange(event) { if (event.data === YT.PlayerState.PLAYING) { isPlaying = true; playPauseButton.textContent = '⏸️'; startProgressUpdater(); } else { isPlaying = false; playPauseButton.textContent = '▶️'; clearInterval(progressInterval); } if (event.data === YT.PlayerState.ENDED) { playNext(); } }
 
     // === 4. MEMUAT DAN MENAMPILKAN LAGU ===
-    async function loadInitialPlaylist() { try { const response = await fetch('/api/topcharts'); if (!response.ok) throw new Error('Gagal memuat Top Charts!'); const songs = await response.json(); currentPlaylist = songs; isTopChartsView = true; renderPlaylist(currentPlaylist); } catch (error) { console.error(error); songListContainer.innerHTML = '<p>Gagal memuat lagu. Coba refresh halaman.</p>'; } }
+    async function loadInitialPlaylist() { try { const response = await fetch('/.netlify/functions/topcharts'); if (!response.ok) throw new Error('Gagal memuat Top Charts!'); const songs = await response.json(); currentPlaylist = songs; isTopChartsView = true; renderPlaylist(currentPlaylist); } catch (error) { console.error(error); songListContainer.innerHTML = '<p>Gagal memuat lagu. Coba refresh halaman.</p>'; } }
     function renderPlaylist(playlist) {
         songListContainer.innerHTML = '';
         if (playlist.length === 0) { songListContainer.innerHTML = '<p>Tidak ada hasil yang ditemukan.</p>'; showAllContainer.classList.add('hidden'); return; }
@@ -63,11 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
         else { showAllContainer.classList.add('hidden'); }
     }
     
-    // Fungsi untuk memuat koleksi lagu dari backend
     async function loadKoleksiPlaylist() {
         try {
-            // Mengambil data dari endpoint baru di server
-            const response = await fetch('/api/koleksi');
+            const response = await fetch('/.netlify/functions/koleksi');
             if (!response.ok) throw new Error('Gagal memuat koleksi lagu!');
             const songs = await response.json();
             koleksiPlaylist = songs;
@@ -78,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Fungsi untuk me-render koleksi lagu
     function renderKoleksi(playlist) {
         koleksiLaguContainer.innerHTML = '';
         if (playlist.length === 0) {
@@ -115,13 +112,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function startProgressUpdater() { clearInterval(progressInterval); progressInterval = setInterval(() => { const progress = (player.getCurrentTime() / player.getDuration()) * 100; progressBar.value = progress || 0; }, 1000); }
 
     // === 7. FUNGSI PENCARIAN & KEMBALI KE HOME ===
-    async function handleSearch() { const query = searchInput.value.trim(); if (!query) return; topChartsTitle.textContent = `Hasil Pencarian untuk "${query}"`; songListContainer.innerHTML = '<p>Mencari...</p>'; isTopChartsView = false; showAllContainer.classList.add('hidden'); try { const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`); if (!response.ok) throw new Error('Gagal melakukan pencarian.'); const results = await response.json(); currentPlaylist = results; renderPlaylist(currentPlaylist); } catch (error) { console.error(error); songListContainer.innerHTML = '<p>Terjadi kesalahan saat mencari. Coba lagi.</p>'; } }
+    async function handleSearch() { const query = searchInput.value.trim(); if (!query) return; topChartsTitle.textContent = `Hasil Pencarian untuk "${query}"`; songListContainer.innerHTML = '<p>Mencari...</p>'; isTopChartsView = false; showAllContainer.classList.add('hidden'); try { const response = await fetch(`/.netlify/functions/search?q=${encodeURIComponent(query)}`); if (!response.ok) throw new Error('Gagal melakukan pencarian.'); const results = await response.json(); currentPlaylist = results; renderPlaylist(currentPlaylist); } catch (error) { console.error(error); songListContainer.innerHTML = '<p>Terjadi kesalahan saat mencari. Coba lagi.</p>'; } }
     function returnToHome() { topChartsTitle.textContent = 'Top Charts Hari Ini'; searchInput.value = ''; loadInitialPlaylist(); }
 
     // === 8. EVENT LISTENERS ===
     songListContainer.addEventListener('click', (event) => {
         const songItem = event.target.closest('.song-item');
         if (songItem) {
+            // Saat lagu dari Top Charts atau hasil pencarian diklik,
+            // pastikan currentPlaylist adalah yang dari API.
+            // (Ini sudah diatur oleh loadInitialPlaylist dan handleSearch)
             const index = parseInt(songItem.dataset.index, 10);
             playSong(index);
         }
@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     koleksiLaguContainer.addEventListener('click', (event) => {
         const songItem = event.target.closest('.song-item');
         if (songItem) {
+            // Saat lagu dari koleksi diklik, ganti currentPlaylist ke koleksi
             currentPlaylist = koleksiPlaylist; 
             const index = parseInt(songItem.dataset.index, 10);
             playSong(index);
