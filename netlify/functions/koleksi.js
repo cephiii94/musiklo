@@ -4,12 +4,10 @@ const axios = require('axios');
 const path = require('path');
 const fs = require('fs').promises;
 
-// Karena kita deploy, kita perlu cara yang benar untuk menunjuk ke file
-// __dirname akan menunjuk ke folder fungsi saat dijalankan di Netlify
 const KOLEKSI_LINKS_PATH = path.resolve(__dirname, '../../koleksi_links.json');
 
 exports.handler = async function (event, context) {
-    console.log('Membangun Koleksi dari file link (via Netlify Function).');
+    console.log('Membangun Koleksi dari file link (versi aman).');
     try {
         const data = await fs.readFile(KOLEKSI_LINKS_PATH, 'utf-8');
         const videoLinks = JSON.parse(data);
@@ -31,6 +29,15 @@ exports.handler = async function (event, context) {
             })
             .map(result => {
                 const oembedData = result.value.data;
+
+                // ================== PERBAIKAN BUG DI SINI ==================
+                // Tambahkan pengecekan untuk memastikan data oEmbed valid
+                if (!oembedData || !oembedData.thumbnail_url) {
+                    console.error("Menerima data oEmbed tidak valid atau tanpa thumbnail:", oembedData);
+                    return null; // Kembalikan null jika datanya tidak lengkap
+                }
+                // ==========================================================
+
                 const urlParams = new URL(oembedData.thumbnail_url).pathname.split('/');
                 const videoIdFromThumb = urlParams[2];
 
@@ -40,7 +47,9 @@ exports.handler = async function (event, context) {
                     artist: oembedData.author_name,
                     thumbnailUrl: oembedData.thumbnail_url
                 };
-            });
+            })
+            // BARU: Tambahkan filter untuk menghapus entri yang null (yang datanya tidak valid)
+            .filter(song => song !== null);
 
         return {
             statusCode: 200,
