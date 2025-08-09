@@ -23,7 +23,6 @@
                 <input type="search" id="search-input-mobile" placeholder="Cari...">
                 <button id="search-button-mobile"><i class="fas fa-search"></i></button>
             </div>
-            <!-- Tombol Theme Toggle untuk Mobile -->
             <button id="theme-toggle-mobile" class="theme-toggle-button" title="Ganti Tema">
                 <i class="fas fa-sun"></i>
                 <i class="fas fa-moon hidden"></i>
@@ -62,7 +61,6 @@
                 </ul>
             </nav>
             <div class="sidebar-footer">
-                 <!-- Tombol Theme Toggle untuk Desktop -->
                 <button id="theme-toggle-desktop" class="theme-toggle-button" title="Ganti Tema">
                     <i class="fas fa-sun"></i>
                     <i class="fas fa-moon hidden"></i>
@@ -80,7 +78,9 @@
 
         <!-- === KONTEN UTAMA === -->
         <main class="main-content">
-            <!-- Konten di sini akan diisi oleh app.js -->
+            <!-- Konten (Top Charts, Koleksi, dll.) akan di-render oleh JS di sini -->
+            
+            <!-- Player yang mengapung akan di-render oleh JS di sini juga -->
         </main>
 
         <!-- === SIDEBAR KANAN === -->
@@ -101,7 +101,6 @@
                     <a href="#" class="see-all-link">See all</a>
                 </div>
                 <ul class="played-list">
-                    <!-- Contoh statis, bisa diisi dinamis -->
                 </ul>
             </section>
 
@@ -119,30 +118,19 @@
 
     </div>
 
-    <!-- Player Bawah (Footer) -->
-    <footer class="player-container">
+    <!-- Player Bawah (HANYA UNTUK MOBILE) -->
+    <footer class="player-container-mobile">
         <div class="current-track-info">
-            <img id="current-track-art" src="https://placehold.co/60x60/333/fff?text=?" alt="Album Art">
+            <img id="current-track-art-mobile" src="https://placehold.co/60x60/333/fff?text=?" alt="Album Art">
             <div class="track-details">
-                <p id="current-track-title">Pilih sebuah lagu</p>
-                <p id="current-track-artist">musiklo</p>
+                <p id="current-track-title-mobile">Pilih sebuah lagu</p>
+                <p id="current-track-artist-mobile">musiklo</p>
             </div>
         </div>
-        <div class="player-controls">
-            <button id="shuffle-button" title="Acak"><i class="fas fa-random"></i></button>
-            <button id="prev-button" title="Sebelumnya"><i class="fas fa-step-backward"></i></button>
-            <button id="play-pause-button" title="Mainkan/Jeda"><i id="play-pause-icon" class="fas fa-play-circle"></i></button>
-            <button id="next-button" title="Berikutnya"><i class="fas fa-step-forward"></i></button>
-            <button id="repeat-button" title="Ulangi"><i class="fas fa-redo"></i></button>
-        </div>
-        <div class="progress-volume-controls">
-             <span id="current-time-display">0:00</span>
-             <input type="range" id="progress-bar" value="0" step="1">
-             <span id="total-time-display">0:00</span>
-             <div class="volume-control">
-                <i class="fas fa-volume-high" id="volume-icon"></i>
-                <input type="range" id="volume-bar" min="0" max="100" value="80">
-            </div>
+        <div class="player-controls-mobile">
+            <button id="prev-button-mobile" title="Sebelumnya"><i class="fas fa-step-backward"></i></button>
+            <button id="play-pause-button-mobile" title="Mainkan/Jeda"><i id="play-pause-icon-mobile" class="fas fa-play-circle"></i></button>
+            <button id="next-button-mobile" title="Berikutnya"><i class="fas fa-step-forward"></i></button>
         </div>
     </footer>
 
