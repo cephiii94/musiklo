@@ -1,17 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // === 1. SELEKSI ELEMEN DOM (LENGKAP) ===
-    // Main & Koleksi
-    const songListContainer = document.getElementById('song-list-container');
-    const koleksiLaguContainer = document.getElementById('koleksi-lagu-container');
-    const searchInput = document.getElementById('search-input');
-    const searchButton = document.getElementById('search-button');
-    const topChartsTitle = document.querySelector('.playlist-section h2');
-    const logoLink = document.getElementById('logo-link');
-    const showAllButton = document.getElementById('show-all-button');
-    const hideButton = document.getElementById('hide-button');
+    // === 1. SELEKSI ELEMEN DOM ===
+    const themeToggleButtonMobile = document.getElementById('theme-toggle-mobile');
+    const themeToggleButtonDesktop = document.getElementById('theme-toggle-desktop');
+    const mainContent = document.querySelector('.main-content');
+    const mainContentMobile = document.createElement('div');
+    mainContentMobile.className = 'main-content-mobile';
+    document.body.insertBefore(mainContentMobile, document.querySelector('.desktop-container'));
     
-    // Mini Player (Footer)
+    const searchInputDesktop = document.getElementById('search-input-desktop');
+    const searchInputMobile = document.getElementById('search-input-mobile');
+    const searchButtonMobile = document.getElementById('search-button-mobile');
+    const logoLinkDesktop = document.getElementById('logo-link-desktop');
+    const logoLinkMobile = document.getElementById('logo-link-mobile');
+    
     const playPauseButton = document.getElementById('play-pause-button');
     const playPauseIcon = document.getElementById('play-pause-icon');
     const nextButton = document.getElementById('next-button');
@@ -22,393 +24,292 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBar = document.getElementById('progress-bar');
     const volumeBar = document.getElementById('volume-bar');
     const volumeIcon = document.getElementById('volume-icon');
-
-    // Expanded Player (Desktop)
-    const expandedPlayer = document.getElementById('expanded-player');
-    const closeExpandedPlayer = document.getElementById('close-expanded-player');
-    const expandedPlayerArt = document.getElementById('expanded-player-art');
-    const expandedPlayerTitle = document.getElementById('expanded-player-title');
-    const expandedPlayerArtist = document.getElementById('expanded-player-artist');
-    const expandedProgressBar = document.getElementById('expanded-progress-bar');
-    const expandedCurrentTime = document.getElementById('expanded-current-time');
-    const expandedDuration = document.getElementById('expanded-duration');
-    const expandedPrevBtn = document.getElementById('expanded-prev-btn');
-    const expandedPlayPauseBtn = document.getElementById('expanded-play-pause-btn');
-    const expandedPlayPauseIcon = document.getElementById('expanded-play-pause-icon');
-    const expandedNextBtn = document.getElementById('expanded-next-btn');
-    const expandedVolumeBtn = document.getElementById('expanded-volume-btn');
-    const expandedVolumeIcon = document.getElementById('expanded-volume-icon');
-    const expandedVolumeBar = document.getElementById('expanded-volume-bar');
-
-    // Modal Playlist & Lirik
-    const playlistModalBtn = document.getElementById('playlist-modal-btn');
-    const lyricsModalBtn = document.getElementById('lyrics-modal-btn');
-    const playlistModal = document.getElementById('playlist-modal');
-    const lyricsModal = document.getElementById('lyrics-modal');
-    const closePlaylistModal = document.getElementById('close-playlist-modal');
-    const closeLyricsModal = document.getElementById('close-lyrics-modal');
-    const playlistModalList = document.getElementById('playlist-modal-list');
-
+    const currentTimeDisplay = document.getElementById('current-time-display');
+    const totalTimeDisplay = document.getElementById('total-time-display');
+    
+    const nowPlayingCardArt = document.getElementById('now-playing-card-art');
+    const nowPlayingCardTitle = document.getElementById('now-playing-card-title');
+    const nowPlayingCardArtist = document.getElementById('now-playing-card-artist');
 
     // === 2. STATE APLIKASI ===
     let player;
-    let currentPlaylist = [];
+    let topChartsPlaylist = [];
     let koleksiPlaylist = [];
-    let topChartsPlaylist = []; // Tambahkan ini
+    let currentPlaylist = [];
+    let activePlaylistSource = null;
     let currentIndex = -1;
     let isPlaying = false;
     let progressInterval;
-    let isTopChartsView = true;
     let lastVolume = 80;
 
+    // === 3. LOGIKA TEMA (DARK/LIGHT MODE) ===
+    const applyTheme = (theme) => {
+        document.body.classList.remove('light-mode', 'dark-mode');
+        document.body.classList.add(theme);
+        localStorage.setItem('musiklo-theme', theme);
 
-    // === 3. INISIALISASI YOUTUBE PLAYER ===
-    window.onYouTubeIframeAPIReady = function() { player = new YT.Player('youtube-player', { height: '0', width: '0', events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange } }); };
-    
+        const sunIcons = document.querySelectorAll('.theme-toggle-button .fa-sun');
+        const moonIcons = document.querySelectorAll('.theme-toggle-button .fa-moon');
+
+        if (theme === 'dark-mode') {
+            sunIcons.forEach(i => i.classList.add('hidden'));
+            moonIcons.forEach(i => i.classList.remove('hidden'));
+        } else {
+            sunIcons.forEach(i => i.classList.remove('hidden'));
+            moonIcons.forEach(i => i.classList.add('hidden'));
+        }
+    };
+
+    const toggleTheme = () => {
+        const currentTheme = localStorage.getItem('musiklo-theme') || 'light-mode';
+        const newTheme = currentTheme === 'light-mode' ? 'dark-mode' : 'light-mode';
+        applyTheme(newTheme);
+    };
+
+    const initializeTheme = () => {
+        const savedTheme = localStorage.getItem('musiklo-theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (savedTheme) {
+            applyTheme(savedTheme);
+        } else if (prefersDark) {
+            applyTheme('dark-mode');
+        } else {
+            applyTheme('light-mode');
+        }
+    };
+
+    // === 4. INISIALISASI YOUTUBE PLAYER ===
+    window.onYouTubeIframeAPIReady = function() {
+        player = new YT.Player('youtube-player', {
+            height: '0',
+            width: '0',
+            events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
+        });
+    };
     function onPlayerReady(event) {
         const initialVolume = volumeBar.value;
         player.setVolume(initialVolume);
         lastVolume = initialVolume;
         updateVolumeIcon(initialVolume);
-        console.log("YouTube Player siap.");
     }
-
     function onPlayerStateChange(event) {
         isPlaying = (event.data === YT.PlayerState.PLAYING);
-        if (isPlaying) {
-            startProgressUpdater();
-            renderPlaylistQueue();
-        } else {
-            clearInterval(progressInterval);
-        }
-        syncPlayerState();
-        if (event.data === YT.PlayerState.ENDED) { playNext(); }
+        if (isPlaying) startProgressUpdater();
+        else clearInterval(progressInterval);
+        updatePlayPauseIcons();
+        if (event.data === YT.PlayerState.ENDED) playNext();
     }
 
-
-    // === 4. FUNGSI-FUNGSI PEMBANTU & SINKRONISASI ===
-    function decodeHtml(html) { const txt = document.createElement("textarea"); txt.innerHTML = html; return txt.value; }
-    function formatTime(seconds) { const min = Math.floor(seconds / 60); const sec = Math.floor(seconds % 60).toString().padStart(2, '0'); return `${min}:${sec}`; }
-
+    // === 5. FUNGSI-FUNGSI UI & SINKRONISASI ===
+    const decodeHtml = (html) => { const txt = document.createElement("textarea"); txt.innerHTML = html; return txt.value; };
+    const formatTime = (seconds) => { const min = Math.floor(seconds / 60); const sec = Math.floor(seconds % 60).toString().padStart(2, '0'); return `${min}:${sec}`; };
+    
     function updateVolumeIcon(volume) {
-        const icons = [volumeIcon, expandedVolumeIcon];
-        icons.forEach(icon => {
-            if (!icon) return;
-            icon.classList.remove('fa-volume-high', 'fa-volume-low', 'fa-volume-xmark');
-            if (volume == 0) { icon.classList.add('fa-volume-xmark'); } 
-            else if (volume <= 50) { icon.classList.add('fa-volume-low'); } 
-            else { icon.classList.add('fa-volume-high'); }
-        });
+        volumeIcon.classList.remove('fa-volume-high', 'fa-volume-low', 'fa-volume-xmark');
+        if (volume == 0) volumeIcon.classList.add('fa-volume-xmark');
+        else if (volume <= 50) volumeIcon.classList.add('fa-volume-low');
+        else volumeIcon.classList.add('fa-volume-high');
     }
-
-    function syncPlayerState() {
-        if (!player || typeof player.getDuration !== 'function') return;
+    function updatePlayPauseIcons() {
+        playPauseIcon.classList.remove('fa-play-circle', 'fa-pause-circle');
+        playPauseIcon.classList.add(isPlaying ? 'fa-pause-circle' : 'fa-play-circle');
+    }
+    function updateProgress() {
+        if (!player || typeof player.getDuration !== 'function' || !isPlaying) return;
         const duration = player.getDuration();
         const currentTime = player.getCurrentTime();
-        const progress = (currentTime / duration) * 100;
-        
-        // Sinkronisasi ikon play/pause
-        [playPauseIcon, expandedPlayPauseIcon].forEach(icon => {
-            if (!icon) return;
-            icon.classList.remove('fa-play', 'fa-pause');
-            icon.classList.add(isPlaying ? 'fa-pause' : 'fa-play');
-        });
-
-        // Sinkronisasi progress bar & waktu
-        if(duration > 0) {
-            progressBar.value = progress;
-            expandedProgressBar.value = progress;
-            expandedCurrentTime.textContent = formatTime(currentTime);
-            expandedDuration.textContent = formatTime(duration);
-        }
+        const progress = (duration > 0) ? (currentTime / duration) * 100 : 0;
+        progressBar.value = progress;
+        currentTimeDisplay.textContent = formatTime(currentTime);
+        totalTimeDisplay.textContent = formatTime(duration);
     }
-
-
-    // === 5. MEMUAT, MERENDER, DAN LOGIKA PEMUTARAN ===
-    async function loadInitialPlaylist() {
-        try {
-            const response = await fetch('/.netlify/functions/topcharts');
-            if (!response.ok) throw new Error('Gagal memuat Top Charts!');
-            const songs = await response.json();
-            topChartsPlaylist = songs; // Simpan playlist Top Charts
-            currentPlaylist = songs;
-            isTopChartsView = true;
-            renderPlaylist(currentPlaylist);
-        } catch (error) {
-            console.error(error);
-            songListContainer.innerHTML = '<p>Gagal memuat lagu. Coba refresh halaman.</p>';
-        }
-    }
-
-    function renderPlaylist(playlist) {
-        songListContainer.innerHTML = '';
-        if (!playlist || playlist.length === 0) {
-            songListContainer.innerHTML = '<p>Tidak ada hasil yang ditemukan.</p>';
-            return;
-        }
-        playlist.forEach((song, index) => {
-            const songItem = document.createElement('div');
-            songItem.className = 'song-item';
-            songItem.dataset.index = index;
-            songItem.dataset.videoId = song.videoId;
-            if (isTopChartsView && index >= 5) {
-                songItem.classList.add('hidden');
-            }
-            songItem.innerHTML = `<img src="${song.thumbnailUrl}" alt="${decodeHtml(song.title)}"><p class="title" title="${decodeHtml(song.title)}">${decodeHtml(song.title)}</p><p class="artist">${decodeHtml(song.artist)}</p>`;
-            songListContainer.appendChild(songItem);
-        });
-        if (isTopChartsView && playlist.length > 5) {
-            showAllButton.classList.remove('hidden');
-            hideButton.classList.add('hidden');
-        } else {
-            showAllButton.classList.add('hidden');
-            hideButton.classList.add('hidden');
-        }
-        if(currentIndex !== -1) {
-            updatePlayerUI(currentPlaylist[currentIndex]);
-        }
-    }
-    
-    async function loadKoleksiPlaylist() {
-        try {
-            const response = await fetch('/.netlify/functions/koleksi');
-            if (!response.ok) throw new Error('Gagal memuat koleksi lagu!');
-            const songs = await response.json();
-            koleksiPlaylist = songs;
-            renderKoleksi(koleksiPlaylist);
-        } catch (error) {
-            console.error(error);
-            koleksiLaguContainer.innerHTML = '<p>Gagal memuat koleksi lagu.</p>';
-        }
-    }
-
-    function renderKoleksi(playlist) {
-        koleksiLaguContainer.innerHTML = '';
-        if (playlist.length === 0) {
-            return;
-        }
-        playlist.forEach((song, index) => {
-            const songItem = document.createElement('div');
-            songItem.className = 'song-item';
-            songItem.dataset.index = index;
-            songItem.dataset.videoId = song.videoId;
-            songItem.innerHTML = `<img src="${song.thumbnailUrl}" alt="${decodeHtml(song.title)}"><p class="title" title="${decodeHtml(song.title)}">${decodeHtml(song.title)}</p><p class="artist">${decodeHtml(song.artist)}</p>`;
-            koleksiLaguContainer.appendChild(songItem);
-        });
-    }
-
-    function playSong(index, playlist) {
-        // Selalu set currentPlaylist ke playlist yang dipilih
-        currentPlaylist = playlist;
-        // Set currentIndex ke index yang dipilih
-        currentIndex = index;
-        if (index >= 0 && index < currentPlaylist.length) {
-            const song = currentPlaylist[currentIndex];
-            if (player && typeof player.loadVideoById === 'function') {
-                player.loadVideoById(song.videoId);
-                updatePlayerUI(song);
-            } else {
-                setTimeout(() => playSong(index, playlist), 500);
-            }
-        }
-    }
-
-    function playNext() {
-        if (currentPlaylist.length === 0) return;
-        const nextIndex = (currentIndex + 1) % currentPlaylist.length;
-        playSong(nextIndex, currentPlaylist);
-    }
-
-    function playPrev() {
-        if (currentPlaylist.length === 0) return;
-        const prevIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
-        playSong(prevIndex, currentPlaylist);
-    }
-
-    function togglePlayPause() {
-        if (!player || typeof player.playVideo !== 'function' || currentIndex === -1) return;
-        if (isPlaying) {
-            player.pauseVideo();
-        } else {
-            player.playVideo();
-        }
-    }
-
     function updatePlayerUI(song) {
+        if (!song) return;
         const title = decodeHtml(song.title);
         const artist = decodeHtml(song.artist);
         currentTrackArt.src = song.thumbnailUrl;
         currentTrackTitle.textContent = title;
         currentTrackArtist.textContent = artist;
-        expandedPlayerArt.src = song.thumbnailUrl;
-        expandedPlayerTitle.textContent = title;
-        expandedPlayerArtist.textContent = artist;
-        document.querySelectorAll('.song-item').forEach(item => item.classList.remove('active-song'));
-        const activeSongElement = document.querySelector(`.song-item[data-video-id='${song.videoId}']`);
-        if (activeSongElement) {
-            activeSongElement.classList.add('active-song');
-        }
-        renderPlaylistQueue();
+        nowPlayingCardArt.src = song.thumbnailUrl;
+        nowPlayingCardTitle.textContent = title;
+        nowPlayingCardArtist.textContent = artist;
+        document.querySelectorAll('.song-item-grid, .song-list-item').forEach(item => {
+            item.classList.remove('active-song');
+        });
+        document.querySelectorAll(`[data-video-id='${song.videoId}']`).forEach(el => el.classList.add('active-song'));
     }
-
     function startProgressUpdater() {
         clearInterval(progressInterval);
-        progressInterval = setInterval(syncPlayerState, 1000);
+        progressInterval = setInterval(updateProgress, 1000);
     }
 
-    function renderPlaylistQueue() {
-        if (!playlistModalList) return;
-        playlistModalList.innerHTML = '';
-        if (currentIndex === -1) return;
-        
-        const upcomingSongs = currentPlaylist.slice(currentIndex);
-        upcomingSongs.forEach((song, i) => {
-            const li = document.createElement('li');
-            const absoluteIndex = currentIndex + i;
-            li.dataset.index = absoluteIndex;
-            if (i === 0) li.classList.add('active-in-queue');
-            li.innerHTML = `<img src="${song.thumbnailUrl}" alt=""><div><p class="title">${decodeHtml(song.title)}</p><p class="artist">${decodeHtml(song.artist)}</p></div>`;
-            li.addEventListener('click', () => {
-                playSong(absoluteIndex, currentPlaylist);
-                playlistModal.classList.add('hidden');
-            });
-            playlistModalList.appendChild(li);
+    // === 6. FUNGSI RENDER KONTEN ===
+    function renderHomePage() {
+        mainContent.innerHTML = `<section id="top-charts-section" class="playlist-section-desktop"><div class="playlist-header"><h2>Top Charts</h2></div><div id="top-charts-container-desktop" class="song-grid"></div><div id="top-charts-controls" class="show-all-container"></div></section><section id="koleksi-section" class="playlist-section-desktop"><div class="playlist-header"><h2>Koleksi Lokal</h2></div><div id="koleksi-container-desktop" class="song-grid"></div></section>`;
+        mainContentMobile.innerHTML = `<section class="playlist-section-mobile"><h2>Top Charts</h2><div id="top-charts-container-mobile" class="song-grid"></div><div id="top-charts-controls-mobile" class="show-all-container"></div></section><section class="playlist-section-mobile"><h2>Koleksi Lokal</h2><div id="koleksi-container-mobile" class="song-grid"></div></section>`;
+        renderTopCharts(topChartsPlaylist);
+        renderKoleksi(koleksiPlaylist);
+    }
+    
+    function renderGrid(playlist, playlistName) {
+        let gridHTML = '';
+        playlist.forEach((song, index) => {
+            const hiddenClass = (playlistName === 'topcharts' && index >= 5) ? 'hidden' : '';
+            gridHTML += `
+                <div class="song-item-grid ${hiddenClass}" data-index="${index}" data-playlist="${playlistName}" data-video-id="${song.videoId}">
+                    <img src="${song.thumbnailUrl}" alt="${decodeHtml(song.title)}">
+                    <p class="title" title="${decodeHtml(song.title)}">${decodeHtml(song.title)}</p>
+                    <p class="artist">${decodeHtml(song.artist)}</p>
+                </div>`;
         });
+        return gridHTML;
     }
 
+    function renderTopCharts(playlist) {
+        const containerDesktop = document.getElementById('top-charts-container-desktop');
+        const containerMobile = document.getElementById('top-charts-container-mobile');
+        const controlsDesktop = document.getElementById('top-charts-controls');
+        const controlsMobile = document.getElementById('top-charts-controls-mobile');
+        if (!containerDesktop || !containerMobile) return;
+        
+        const gridHTML = renderGrid(playlist, 'topcharts');
+        containerDesktop.innerHTML = gridHTML;
+        containerMobile.innerHTML = gridHTML;
 
-    // === 6. FUNGSI PENCARIAN & NAVIGASI ===
-    async function handleSearch() {
-        const query = searchInput.value.trim();
+        const controlsHTML = `<button id="show-all-button" class="${playlist.length > 5 ? '' : 'hidden'}">Lihat Semua</button><button id="hide-button" class="hidden">Sembunyikan</button>`;
+        controlsDesktop.innerHTML = controlsHTML;
+        controlsMobile.innerHTML = controlsHTML;
+    }
+
+    function renderKoleksi(playlist) {
+        const containerDesktop = document.getElementById('koleksi-container-desktop');
+        const containerMobile = document.getElementById('koleksi-container-mobile');
+        if (!containerDesktop || !containerMobile) return;
+        
+        const gridHTML = renderGrid(playlist, 'koleksi');
+        containerDesktop.innerHTML = gridHTML;
+        containerMobile.innerHTML = gridHTML;
+    }
+
+    function renderSearchResults(playlist, query) {
+        const gridHTML = renderGrid(playlist, 'search');
+        const resultsHTML = `<section class="playlist-section-desktop"><div class="playlist-header"><h2>Hasil untuk "${query}"</h2></div><div class="song-grid">${gridHTML}</div></section>`;
+        const resultsHTMLMobile = `<section class="playlist-section-mobile"><h2>Hasil untuk "${query}"</h2><div class="song-grid">${gridHTML}</div></section>`;
+        mainContent.innerHTML = resultsHTML;
+        mainContentMobile.innerHTML = resultsHTMLMobile;
+    }
+
+    // === 7. LOGIKA PEMUTARAN LAGU ===
+    function playSong(index, playlistSource) {
+        activePlaylistSource = playlistSource;
+        if (playlistSource === 'topcharts') currentPlaylist = topChartsPlaylist;
+        else if (playlistSource === 'koleksi') currentPlaylist = koleksiPlaylist;
+        if (index >= 0 && index < currentPlaylist.length) {
+            currentIndex = index;
+            const song = currentPlaylist[currentIndex];
+            if (player && typeof player.loadVideoById === 'function') {
+                player.loadVideoById(song.videoId);
+                updatePlayerUI(song);
+            } else {
+                setTimeout(() => playSong(index, playlistSource), 500);
+            }
+        }
+    }
+    const playNext = () => { if (currentPlaylist.length === 0) return; const nextIndex = (currentIndex + 1) % currentPlaylist.length; playSong(nextIndex, activePlaylistSource); };
+    const playPrev = () => { if (currentPlaylist.length === 0) return; const prevIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length; playSong(prevIndex, activePlaylistSource); };
+    const togglePlayPause = () => { if (!player || typeof player.playVideo !== 'function' || currentIndex === -1) return; isPlaying ? player.pauseVideo() : player.playVideo(); };
+
+    // === 8. FUNGSI PENCARIAN & MEMUAT DATA ===
+    async function handleSearch(query) {
         if (!query) return;
-        topChartsTitle.textContent = `Hasil Pencarian untuk "${query}"`;
-        songListContainer.innerHTML = '<div class="loader"></div>';
-        isTopChartsView = false;
-        showAllButton.classList.add('hidden');
-        hideButton.classList.add('hidden');
+        mainContent.innerHTML = '<div class="loader"></div>';
+        mainContentMobile.innerHTML = '<div class="loader"></div>';
         try {
             const response = await fetch(`/.netlify/functions/search?q=${encodeURIComponent(query)}`);
             if (!response.ok) throw new Error('Gagal melakukan pencarian.');
             const results = await response.json();
             currentPlaylist = results;
-            renderPlaylist(results);
+            activePlaylistSource = 'search';
+            renderSearchResults(results, query);
+        } catch (error) {
+            mainContent.innerHTML = '<p>Terjadi kesalahan saat mencari.</p>';
+            mainContentMobile.innerHTML = '<p>Terjadi kesalahan saat mencari.</p>';
+        }
+    }
+    async function loadInitialData() {
+        mainContent.innerHTML = '<div class="loader"></div>';
+        mainContentMobile.innerHTML = '<div class="loader"></div>';
+        try {
+            const [topChartsRes, koleksiRes] = await Promise.all([fetch('/.netlify/functions/topcharts'), fetch('/.netlify/functions/koleksi')]);
+            if (!topChartsRes.ok) throw new Error('Gagal memuat Top Charts');
+            if (!koleksiRes.ok) throw new Error('Gagal memuat Koleksi');
+            topChartsPlaylist = await topChartsRes.json();
+            koleksiPlaylist = await koleksiRes.json();
+            renderHomePage();
         } catch (error) {
             console.error(error);
-            songListContainer.innerHTML = '<p>Terjadi kesalahan saat mencari. Coba lagi.</p>';
+            mainContent.innerHTML = '<p>Gagal memuat data. Coba refresh halaman.</p>';
         }
     }
+    const returnToHome = () => { searchInputDesktop.value = ''; searchInputMobile.value = ''; loadInitialData(); };
 
-    function returnToHome() {
-        topChartsTitle.textContent = 'Top Charts Hari Ini';
-        searchInput.value = '';
-        loadInitialPlaylist();
-    }
+    // === 9. EVENT LISTENERS ===
+    themeToggleButtonMobile.addEventListener('click', toggleTheme);
+    themeToggleButtonDesktop.addEventListener('click', toggleTheme);
 
-
-    // === 7. EVENT LISTENERS ===
-    songListContainer.addEventListener('click', (event) => {
-        const songItem = event.target.closest('.song-item');
+    document.body.addEventListener('click', (event) => {
+        const songItem = event.target.closest('.song-item-grid');
         if (songItem) {
-            // Selalu gunakan topChartsPlaylist jika sedang di Top Charts
-            const playlistToUse = isTopChartsView ? topChartsPlaylist : currentPlaylist;
-            playSong(parseInt(songItem.dataset.index, 10), playlistToUse);
+            const index = parseInt(songItem.dataset.index, 10);
+            const playlistSource = songItem.dataset.playlist;
+            playSong(index, playlistSource);
+        }
+
+        if (event.target.matches('#show-all-button')) {
+            document.querySelectorAll('[data-playlist="topcharts"].hidden').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('#show-all-button').forEach(btn => btn.classList.add('hidden'));
+            document.querySelectorAll('#hide-button').forEach(btn => btn.classList.remove('hidden'));
+        }
+        if (event.target.matches('#hide-button')) {
+            document.querySelectorAll('[data-playlist="topcharts"]').forEach((el, index) => {
+                // Perbaikan di sini: Gunakan index dari elemen yang diiterasi
+                if(index >= 5) {
+                    el.classList.add('hidden');
+                }
+            });
+            document.querySelectorAll('#hide-button').forEach(btn => btn.classList.add('hidden'));
+            document.querySelectorAll('#show-all-button').forEach(btn => btn.classList.remove('hidden'));
+            
+            // Scroll ke atas section Top Charts
+            const topChartsSection = document.getElementById('top-charts-section') || document.querySelector('.main-content-mobile section:first-child');
+            if(topChartsSection) {
+                topChartsSection.scrollIntoView({ behavior: 'smooth' });
+            }
         }
     });
-    koleksiLaguContainer.addEventListener('click', (event) => {
-        const songItem = event.target.closest('.song-item');
-        if (songItem) {
-            playSong(parseInt(songItem.dataset.index, 10), koleksiPlaylist);
-        }
-    });
 
-    // Kontrol Mini Player
     playPauseButton.addEventListener('click', togglePlayPause);
     nextButton.addEventListener('click', playNext);
     prevButton.addEventListener('click', playPrev);
-
-    // Sinkronisasi Volume Bars
-    function handleVolumeChange(value) {
-        player.setVolume(value);
-        updateVolumeIcon(value);
-        if (value > 0) {
-            lastVolume = value;
-        }
-        volumeBar.value = value;
-        expandedVolumeBar.value = value;
-    }
-    volumeBar.addEventListener('input', (e) => handleVolumeChange(e.target.value));
-    
-    volumeIcon.addEventListener('click', () => {
-        if (player.isMuted() || volumeBar.value == 0) {
-            const volumeToSet = lastVolume > 0 ? lastVolume : 50;
-            handleVolumeChange(volumeToSet);
-            player.unMute();
-        } else {
-            lastVolume = volumeBar.value;
-            handleVolumeChange(0);
-            player.mute();
+    volumeBar.addEventListener('input', (e) => {
+        if(player && typeof player.setVolume === 'function') {
+            player.setVolume(e.target.value);
+            updateVolumeIcon(e.target.value);
         }
     });
-
-    // Sinkronisasi Progress Bars
-    function handleProgressChange(value) {
-        if (currentIndex === -1) return;
-        const newTime = player.getDuration() * (value / 100);
-        player.seekTo(newTime);
-    }
-    progressBar.addEventListener('input', (e) => handleProgressChange(e.target.value));
-    
-    // Listeners Lainnya
-    searchButton.addEventListener('click', handleSearch);
-    searchInput.addEventListener('keyup', (event) => {
-        if (event.key === 'Enter') handleSearch();
-    });
-    logoLink.addEventListener('click', (event) => {
-        event.preventDefault();
-        returnToHome();
-    });
-    showAllButton.addEventListener('click', () => {
-        songListContainer.querySelectorAll('.song-item.hidden').forEach(item => {
-            item.classList.remove('hidden');
-        });
-        showAllButton.classList.add('hidden');
-        hideButton.classList.remove('hidden');
-    });
-    hideButton.addEventListener('click', () => {
-        songListContainer.querySelectorAll('.song-item').forEach((item, index) => {
-            if (index >= 5) {
-                item.classList.add('hidden');
-            }
-        });
-        hideButton.classList.add('hidden');
-        showAllButton.classList.remove('hidden');
-        topChartsTitle.scrollIntoView({
-            behavior: 'smooth'
-        });
-    });
-
-    // Expanded Player & Modal Listeners
-    currentTrackArt.addEventListener('click', () => {
-        if (currentIndex !== -1) {
-            expandedPlayer.classList.remove('hidden');
+    progressBar.addEventListener('input', (e) => {
+        if(currentIndex !== -1 && player && typeof player.seekTo === 'function') {
+            player.seekTo(player.getDuration() * (e.target.value / 100));
         }
     });
-    closeExpandedPlayer.addEventListener('click', () => {
-        expandedPlayer.classList.add('hidden');
-    });
-    expandedPlayPauseBtn.addEventListener('click', togglePlayPause);
-    expandedNextBtn.addEventListener('click', playNext);
-    expandedPrevBtn.addEventListener('click', playPrev);
-    expandedProgressBar.addEventListener('input', (e) => handleProgressChange(e.target.value));
-    expandedVolumeBar.addEventListener('input', (e) => handleVolumeChange(e.target.value));
+    const performSearch = (e) => { if (e.key === 'Enter') handleSearch(e.target.value.trim()); };
+    searchInputDesktop.addEventListener('keyup', performSearch);
+    searchInputMobile.addEventListener('keyup', performSearch);
+    searchButtonMobile.addEventListener('click', () => handleSearch(searchInputMobile.value.trim()));
+    logoLinkDesktop.addEventListener('click', (e) => { e.preventDefault(); returnToHome(); });
+    logoLinkMobile.addEventListener('click', (e) => { e.preventDefault(); returnToHome(); });
 
-    playlistModalBtn.addEventListener('click', () => playlistModal.classList.remove('hidden'));
-    closePlaylistModal.addEventListener('click', () => playlistModal.classList.add('hidden'));
-    lyricsModalBtn.addEventListener('click', () => lyricsModal.classList.remove('hidden'));
-    closeLyricsModal.addEventListener('click', () => lyricsModal.classList.add('hidden'));
-
-
-    // === 8. INISIALISASI APLIKASI ===
-    loadInitialPlaylist();
-    loadKoleksiPlaylist();
+    // === 10. INISIALISASI APLIKASI ===
+    initializeTheme();
+    loadInitialData();
 });

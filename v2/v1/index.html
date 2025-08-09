@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>musiklo - Dengarkan Musik Favoritmu</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo">
+            <a href="#" id="logo-link"><h1>musiklo</h1></a>
+        </div>
+        <div class="search-bar">
+            <input type="search" id="search-input" placeholder="Cari lagu atau artis...">
+            <button id="search-button">Cari</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="playlist-section">
+            <h2>Top Charts Hari Ini</h2>
+            <div id="song-list-container" class="song-grid">
+                </div>
+            <div class="show-all-container">
+                <button id="show-all-button" class="hidden">Lihat Semua</button>
+                <button id="hide-button" class="hidden">Sembunyikan</button>    
+            </div>
+        </section>
+
+        <section class="playlist-section">
+            <h2>Koleksi Lagu Spesial</h2>
+            <div id="koleksi-lagu-container" class="song-grid">
+                </div>
+        </section>
+    </main>
+
+    <div id="expanded-player" class="hidden">
+
+        <div class="nextlist">
+        <button id="playlist-modal-btn" title="Antrean"><i class="fas fa-list-ol"></i></button>
+        </div> 
+
+        <button id="close-expanded-player" class="close-btn"><i class="fas fa-chevron-down"></i></button>
+    
+        <div class="player-content">
+            <div class="song-header">
+                <h2 id="expanded-player-title">Judul Lagu</h2>
+                <p id="expanded-player-artist">Nama Artis</p>
+            </div>
+    
+            <img id="expanded-player-art" src="placeholder.png" alt="Album Art">
+    
+            <div class="progress-section">
+                <input type="range" id="expanded-progress-bar" value="0" step="1">
+                <div class="time-display">
+                    <span id="expanded-current-time">0:00</span>
+                    <span id="expanded-duration">0:00</span>
+                </div>
+            </div>
+    
+            <div class="controls-section">
+                <button id="playlist-modal-btn" title="Antrean"><i class="fas fa-list-ol"></i></button>
+                <button id="expanded-prev-btn" title="Sebelumnya"><i class="fas fa-step-backward"></i></button>
+                <button id="expanded-play-pause-btn" title="Mainkan/Jeda"><i class="fas fa-play" id="expanded-play-pause-icon"></i></button>
+                <button id="expanded-next-btn" title="Berikutnya"><i class="fas fa-step-forward"></i></button>
+                
+                <div class="volume-popup-container">
+                    <button id="expanded-volume-btn" title="Volume"><i class="fas fa-volume-high" id="expanded-volume-icon"></i></button>
+                    <div class="volume-bar-container">
+                        <input type="range" id="expanded-volume-bar" min="0" max="100" value="80" class="vertical">
+                    </div>
+                </div>
+                
+                <button id="lyrics-modal-btn" title="Lirik"><i class="fas fa-music"></i></button>
+            </div>
+        </div>
+    
+        <div id="playlist-modal" class="side-modal left hidden">
+            <div class="modal-header">
+                <h3>Antrean Berikutnya</h3>
+                <button id="close-playlist-modal" class="close-modal-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <ul id="playlist-modal-list">
+                </ul>
+        </div>
+    
+        <div id="lyrics-modal" class="side-modal right hidden">
+            <div class="modal-header">
+                <h3>Lirik Lagu</h3>
+                <button id="close-lyrics-modal" class="close-modal-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="lyrics-content">
+                <p>Fitur lirik akan segera tersedia.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="player-container">
+        <div class="current-track-info">
+            <img id="current-track-art" src="placeholder.png" alt="Album Art">
+            <div class="track-details">
+                <p id="current-track-title">Pilih sebuah lagu</p>
+                <p id="current-track-artist">musiklo</p>
+            </div>
+        </div>
+        <div class="player-controls">
+            <button id="prev-button" title="Sebelumnya"><i class="fas fa-step-backward"></i></button>
+            <button id="play-pause-button" title="Mainkan/Jeda"><i class="fas fa-play" id="play-pause-icon"></i></button>
+            <button id="next-button" title="Berikutnya"><i class="fas fa-step-forward"></i></button>
+        </div>
+        <div class="progress-volume-controls">
+             <input type="range" id="progress-bar" value="0" step="1">
+             <div class="volume-control">
+                <i class="fas fa-volume-high" id="volume-icon"></i>
+                <input type="range" id="volume-bar" min="0" max="100" value="80">
+            </div>
+        </div>
+    </footer>
+
+    <div id="youtube-player" style="display: none;"></div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="app.js"></script>
+
+</body>
+</html>

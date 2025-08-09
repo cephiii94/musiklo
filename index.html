@@ -7,110 +7,138 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
+<!-- Class 'light-mode' atau 'dark-mode' akan ditambahkan oleh JS -->
 <body>
 
-    <header class="main-header">
+    <!-- Header untuk tampilan mobile/tablet -->
+    <header class="main-header-mobile">
         <div class="logo">
-            <a href="#" id="logo-link"><h1>musiklo</h1></a>
+            <a href="#" id="logo-link-mobile"><h1>musiklo</h1></a>
         </div>
-        <div class="search-bar">
-            <input type="search" id="search-input" placeholder="Cari lagu atau artis...">
-            <button id="search-button">Cari</button>
+        <div class="header-controls-mobile">
+            <div class="search-bar">
+                <input type="search" id="search-input-mobile" placeholder="Cari...">
+                <button id="search-button-mobile"><i class="fas fa-search"></i></button>
+            </div>
+            <!-- Tombol Theme Toggle untuk Mobile -->
+            <button id="theme-toggle-mobile" class="theme-toggle-button" title="Ganti Tema">
+                <i class="fas fa-sun"></i>
+                <i class="fas fa-moon hidden"></i>
+            </button>
         </div>
     </header>
 
-    <main>
-        <section class="playlist-section">
-            <h2>Top Charts Hari Ini</h2>
-            <div id="song-list-container" class="song-grid">
-                </div>
-            <div class="show-all-container">
-                <button id="show-all-button" class="hidden">Lihat Semua</button>
-                <button id="hide-button" class="hidden">Sembunyikan</button>    
-            </div>
-        </section>
+    <!-- Kontainer Utama untuk Tampilan Desktop -->
+    <div class="desktop-container">
 
-        <section class="playlist-section">
-            <h2>Koleksi Lagu Spesial</h2>
-            <div id="koleksi-lagu-container" class="song-grid">
-                </div>
-        </section>
-    </main>
-
-    <div id="expanded-player" class="hidden">
-        <button id="close-expanded-player" class="close-btn"><i class="fas fa-chevron-down"></i></button>
-    
-        <div class="player-content">
-            <div class="song-header">
-                <h2 id="expanded-player-title">Judul Lagu</h2>
-                <p id="expanded-player-artist">Nama Artis</p>
+        <!-- === SIDEBAR KIRI === -->
+        <aside class="left-sidebar">
+            <div class="logo-desktop">
+                <a href="#" id="logo-link-desktop"><h1>musiklo</h1></a>
             </div>
-    
-            <img id="expanded-player-art" src="placeholder.png" alt="Album Art">
-    
-            <div class="progress-section">
-                <input type="range" id="expanded-progress-bar" value="0" step="1">
-                <div class="time-display">
-                    <span id="expanded-current-time">0:00</span>
-                    <span id="expanded-duration">0:00</span>
-                </div>
+            <div class="search-bar-desktop">
+                <i class="fas fa-search"></i>
+                <input type="search" id="search-input-desktop" placeholder="Search...">
             </div>
-    
-            <div class="controls-section">
-                <button id="playlist-modal-btn" title="Antrean"><i class="fas fa-list-ol"></i></button>
-                <button id="expanded-prev-btn" title="Sebelumnya"><i class="fas fa-step-backward"></i></button>
-                <button id="expanded-play-pause-btn" title="Mainkan/Jeda"><i class="fas fa-play" id="expanded-play-pause-icon"></i></button>
-                <button id="expanded-next-btn" title="Berikutnya"><i class="fas fa-step-forward"></i></button>
-                
-                <div class="volume-popup-container">
-                    <button id="expanded-volume-btn" title="Volume"><i class="fas fa-volume-high" id="expanded-volume-icon"></i></button>
-                    <div class="volume-bar-container">
-                        <input type="range" id="expanded-volume-bar" min="0" max="100" value="80" class="vertical">
+            <nav class="main-nav">
+                <p class="nav-heading">Menu</p>
+                <ul>
+                    <li class="active"><a href="#"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#"><i class="fas fa-compass"></i> Discover</a></li>
+                    <li><a href="#"><i class="fas fa-stream"></i> Browse</a></li>
+                    <li><a href="#"><i class="fas fa-podcast"></i> Podcasts</a></li>
+                    <li><a href="#"><i class="fas fa-broadcast-tower"></i> Radio</a></li>
+                </ul>
+            </nav>
+            <nav class="library-nav">
+                <p class="nav-heading">Library</p>
+                <ul>
+                    <li><a href="#"><i class="fas fa-compact-disc"></i> Albums</a></li>
+                    <li><a href="#"><i class="fas fa-music"></i> Songs</a></li>
+                    <li><a href="#"><i class="fas fa-users"></i> Artists</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                 <!-- Tombol Theme Toggle untuk Desktop -->
+                <button id="theme-toggle-desktop" class="theme-toggle-button" title="Ganti Tema">
+                    <i class="fas fa-sun"></i>
+                    <i class="fas fa-moon hidden"></i>
+                    <span>Ganti Tema</span>
+                </button>
+                <div class="user-profile">
+                    <img src="https://placehold.co/40x40/6495ed/FFFFFF?text=C" alt="User Avatar">
+                    <div class="user-details">
+                        <p class="user-name">Cecep H.</p>
+                        <p class="user-status">Premium Member</p>
                     </div>
                 </div>
-                
-                <button id="lyrics-modal-btn" title="Lirik"><i class="fas fa-music"></i></button>
             </div>
-        </div>
-    
-        <div id="playlist-modal" class="side-modal left hidden">
-            <div class="modal-header">
-                <h3>Antrean Berikutnya</h3>
-                <button id="close-playlist-modal" class="close-modal-btn"><i class="fas fa-times"></i></button>
-            </div>
-            <ul id="playlist-modal-list">
+        </aside>
+
+        <!-- === KONTEN UTAMA === -->
+        <main class="main-content">
+            <!-- Konten di sini akan diisi oleh app.js -->
+        </main>
+
+        <!-- === SIDEBAR KANAN === -->
+        <aside class="right-sidebar">
+            <section class="tags-section">
+                <h3>Tags</h3>
+                <div class="tags-container">
+                    <span class="tag">Acoustic</span>
+                    <span class="tag">Piano Jazz</span>
+                    <span class="tag active">Jazz</span>
+                    <span class="tag">Indie Pop</span>
+                </div>
+            </section>
+
+            <section class="played-section">
+                <div class="section-header">
+                    <h3>Played</h3>
+                    <a href="#" class="see-all-link">See all</a>
+                </div>
+                <ul class="played-list">
+                    <!-- Contoh statis, bisa diisi dinamis -->
                 </ul>
-        </div>
-    
-        <div id="lyrics-modal" class="side-modal right hidden">
-            <div class="modal-header">
-                <h3>Lirik Lagu</h3>
-                <button id="close-lyrics-modal" class="close-modal-btn"><i class="fas fa-times"></i></button>
+            </section>
+
+            <div class="now-playing-card">
+                 <img id="now-playing-card-art" src="https://placehold.co/300x300/333/fff?text=musiklo" alt="Now Playing Art">
+                 <div class="card-content">
+                     <div class="card-details">
+                        <h4 id="now-playing-card-title">Select a Song</h4>
+                        <p id="now-playing-card-artist">Player</p>
+                     </div>
+                     <button class="add-btn"><i class="fas fa-plus"></i></button>
+                 </div>
             </div>
-            <div id="lyrics-content">
-                <p>Fitur lirik akan segera tersedia.</p>
-            </div>
-        </div>
+        </aside>
+
     </div>
 
+    <!-- Player Bawah (Footer) -->
     <footer class="player-container">
         <div class="current-track-info">
-            <img id="current-track-art" src="placeholder.png" alt="Album Art">
+            <img id="current-track-art" src="https://placehold.co/60x60/333/fff?text=?" alt="Album Art">
             <div class="track-details">
                 <p id="current-track-title">Pilih sebuah lagu</p>
                 <p id="current-track-artist">musiklo</p>
             </div>
         </div>
         <div class="player-controls">
+            <button id="shuffle-button" title="Acak"><i class="fas fa-random"></i></button>
             <button id="prev-button" title="Sebelumnya"><i class="fas fa-step-backward"></i></button>
-            <button id="play-pause-button" title="Mainkan/Jeda"><i class="fas fa-play" id="play-pause-icon"></i></button>
+            <button id="play-pause-button" title="Mainkan/Jeda"><i id="play-pause-icon" class="fas fa-play-circle"></i></button>
             <button id="next-button" title="Berikutnya"><i class="fas fa-step-forward"></i></button>
+            <button id="repeat-button" title="Ulangi"><i class="fas fa-redo"></i></button>
         </div>
         <div class="progress-volume-controls">
+             <span id="current-time-display">0:00</span>
              <input type="range" id="progress-bar" value="0" step="1">
+             <span id="total-time-display">0:00</span>
              <div class="volume-control">
                 <i class="fas fa-volume-high" id="volume-icon"></i>
                 <input type="range" id="volume-bar" min="0" max="100" value="80">
