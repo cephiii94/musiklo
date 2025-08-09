@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let player;
     let currentPlaylist = [];
     let koleksiPlaylist = [];
+    let topChartsPlaylist = []; // Tambahkan ini
     let currentIndex = -1;
     let isPlaying = false;
     let progressInterval;
@@ -129,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/.netlify/functions/topcharts');
             if (!response.ok) throw new Error('Gagal memuat Top Charts!');
             const songs = await response.json();
+            topChartsPlaylist = songs; // Simpan playlist Top Charts
             currentPlaylist = songs;
             isTopChartsView = true;
             renderPlaylist(currentPlaylist);
@@ -196,11 +198,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function playSong(index, playlist) {
-        if (currentPlaylist !== playlist) {
-            currentPlaylist = playlist;
-        }
+        // Selalu set currentPlaylist ke playlist yang dipilih
+        currentPlaylist = playlist;
+        // Set currentIndex ke index yang dipilih
+        currentIndex = index;
         if (index >= 0 && index < currentPlaylist.length) {
-            currentIndex = index;
             const song = currentPlaylist[currentIndex];
             if (player && typeof player.loadVideoById === 'function') {
                 player.loadVideoById(song.videoId);
@@ -307,7 +309,9 @@ document.addEventListener('DOMContentLoaded', () => {
     songListContainer.addEventListener('click', (event) => {
         const songItem = event.target.closest('.song-item');
         if (songItem) {
-            playSong(parseInt(songItem.dataset.index, 10), currentPlaylist);
+            // Selalu gunakan topChartsPlaylist jika sedang di Top Charts
+            const playlistToUse = isTopChartsView ? topChartsPlaylist : currentPlaylist;
+            playSong(parseInt(songItem.dataset.index, 10), playlistToUse);
         }
     });
     koleksiLaguContainer.addEventListener('click', (event) => {
