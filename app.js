@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <section id="top-charts-section" class="playlist-section-desktop">
                     <div class="playlist-header"><h2>Top Charts</h2></div>
                     <div id="top-charts-container-desktop" class="song-grid"></div>
-                    <div id="top-charts-controls" class="show-all-container"></div>
+                    <div id="top-charts-controls-desktop" class="show-all-container"></div>
                 </section>
                 <section id="koleksi-section" class="playlist-section-desktop">
                     <div class="playlist-header"><h2>Koleksi Lokal</h2></div>
@@ -219,10 +219,12 @@ document.addEventListener('DOMContentLoaded', () => {
         addDesktopPlayerListeners();
     }
     
-    function renderGrid(playlist, playlistName) {
+    function renderGrid(playlist, playlistName, limit = -1) {
         let gridHTML = '';
-        playlist.forEach((song, index) => {
-            const hiddenClass = (playlistName === 'topcharts' && index >= 5) ? 'hidden' : '';
+        const itemsToRender = limit === -1 ? playlist : playlist.slice(0, limit);
+        itemsToRender.forEach((song, index) => {
+            const isInitiallyHidden = playlistName === 'topcharts' && index >= 5;
+            const hiddenClass = isInitiallyHidden ? 'hidden' : '';
             gridHTML += `<div class="song-item-grid ${hiddenClass}" data-index="${index}" data-playlist="${playlistName}" data-video-id="${song.videoId}"><img src="${song.thumbnailUrl}" alt="${decodeHtml(song.title)}"><p class="title" title="${decodeHtml(song.title)}">${decodeHtml(song.title)}</p><p class="artist">${decodeHtml(song.artist)}</p></div>`;
         });
         return gridHTML;
@@ -231,16 +233,22 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTopCharts(playlist) {
         const containerDesktop = document.getElementById('top-charts-container-desktop');
         const containerMobile = document.getElementById('top-charts-container-mobile');
-        const controlsDesktop = document.getElementById('top-charts-controls');
+        const controlsDesktop = document.getElementById('top-charts-controls-desktop');
         const controlsMobile = document.getElementById('top-charts-controls-mobile');
+        
         if (!containerDesktop || !containerMobile) return;
+        
         const gridHTML = renderGrid(playlist, 'topcharts');
         containerDesktop.innerHTML = gridHTML;
         containerMobile.innerHTML = gridHTML;
-        const controlsHTML = `<button id="show-all-button" class="${playlist.length > 5 ? '' : 'hidden'}">Lihat Semua</button><button id="hide-button" class="hidden">Sembunyikan</button>`;
-        controlsDesktop.innerHTML = controlsHTML;
-        controlsMobile.innerHTML = controlsHTML;
+
+        if (playlist.length > 5) {
+            const controlsHTML = `<button class="show-all-button">Lihat Semua</button><button class="hide-button hidden">Sembunyikan</button>`;
+            if(controlsDesktop) controlsDesktop.innerHTML = controlsHTML;
+            if(controlsMobile) controlsMobile.innerHTML = controlsHTML;
+        }
     }
+
 
     function renderKoleksi(playlist) {
         const containerDesktop = document.getElementById('koleksi-container-desktop');
@@ -260,21 +268,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === 7. LOGIKA PEMUTARAN LAGU ===
     function playSong(index, playlistSource) {
-        /************************************************************************
-         * PENTING: Perubahan untuk Autoplay di Desktop
-         * ----------------------------------------------------------------------
-         * Kode di bawah ini menggunakan `player.loadVideoById()`.
-         * Fungsi ini akan memuat dan LANGSUNG memutar video secara otomatis.
-         * * KELEBIHAN:
-         * - Memberikan pengalaman "autoplay" instan di peramban desktop.
-         * * KEKURANGAN:
-         * - Kode ini TIDAK AKAN BERFUNGSI di iPhone dan sebagian besar
-         * peramban Android karena kebijakan pemutaran otomatis mereka.
-         * Musik tidak akan terputar sama sekali di perangkat seluler.
-         ************************************************************************/
         activePlaylistSource = playlistSource;
         if (playlistSource === 'topcharts') currentPlaylist = topChartsPlaylist;
         else if (playlistSource === 'koleksi') currentPlaylist = koleksiPlaylist;
+        else if (playlistSource === 'search') { /* currentPlaylist sudah di set saat search */ }
         
         if (index >= 0 && index < currentPlaylist.length) {
             currentIndex = index;
@@ -351,23 +348,42 @@ document.addEventListener('DOMContentLoaded', () => {
             const index = parseInt(songItem.dataset.index, 10);
             const playlistSource = songItem.dataset.playlist;
             playSong(index, playlistSource);
+            return; // Hentikan eksekusi lebih lanjut
         }
 
-        if (event.target.matches('#show-all-button')) {
-            document.querySelectorAll('[data-playlist="topcharts"].hidden').forEach(el => el.classList.remove('hidden'));
-            document.querySelectorAll('#show-all-button').forEach(btn => btn.classList.add('hidden'));
-            document.querySelectorAll('#hide-button').forEach(btn => btn.classList.remove('hidden'));
+        // --- LOGIKA BARU UNTUK SHOW/HIDE ---
+        const showButton = event.target.closest('.show-all-button');
+        const hideButton = event.target.closest('.hide-button');
+
+        if (showButton) {
+            const controlsContainer = showButton.parentElement;
+            const songContainer = controlsContainer.previousElementSibling;
+            
+            songContainer.querySelectorAll('.song-item-grid.hidden').forEach(el => el.classList.remove('hidden'));
+            controlsContainer.querySelector('.show-all-button').classList.add('hidden');
+            controlsContainer.querySelector('.hide-button').classList.remove('hidden');
         }
-        if (event.target.matches('#hide-button')) {
-            document.querySelectorAll('[data-playlist="topcharts"]').forEach((el, index) => {
-                if(index >= 5) el.classList.add('hidden');
+
+        if (hideButton) {
+            const controlsContainer = hideButton.parentElement;
+            const songContainer = controlsContainer.previousElementSibling;
+            const sectionContainer = controlsContainer.parentElement;
+
+            songContainer.querySelectorAll('.song-item-grid').forEach((el, index) => {
+                if (index >= 5) {
+                    el.classList.add('hidden');
+                }
             });
-            document.querySelectorAll('#hide-button').forEach(btn => btn.classList.add('hidden'));
-            document.querySelectorAll('#show-all-button').forEach(btn => btn.classList.remove('hidden'));
-            const topChartsSection = document.getElementById('top-charts-section') || document.querySelector('.main-content-mobile section:first-child');
-            if(topChartsSection) topChartsSection.scrollIntoView({ behavior: 'smooth' });
+
+            controlsContainer.querySelector('.hide-button').classList.add('hidden');
+            controlsContainer.querySelector('.show-all-button').classList.remove('hidden');
+            
+            if(sectionContainer) {
+                sectionContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
     });
+
 
     playPauseButtonMobile.addEventListener('click', togglePlayPause);
     nextButtonMobile.addEventListener('click', playNext);

@@ -28,20 +28,25 @@ body.dark-mode { --primary-bg: #1e1b2e; --secondary-bg: #2a2a3a; --tertiary-bg: 
 /* === TAMPILAN MOBILE & TABLET (<1024px) === */
 /* ======================================= */
 body { padding-bottom: 90px; }
-.main-content-mobile { padding: 2rem; padding-bottom: 4rem; }
+.main-content-mobile { padding: 1rem; padding-bottom: 4rem; } /* Mengurangi padding horizontal */
 .playlist-section-mobile { margin-bottom: 2rem; }
 .playlist-section-mobile h2 { margin-bottom: 1rem; color: var(--text-primary); }
-.song-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1.5rem; }
-.song-item-grid { background-color: var(--secondary-bg); padding: 1rem; border-radius: 8px; box-shadow: 0 4px 15px var(--shadow-color); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+
+/* PERBAIKAN: Mengubah ukuran grid untuk mobile */
+.song-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; } /* Ukuran kartu lebih kecil, jarak lebih rapat */
+
+.song-item-grid { background-color: var(--secondary-bg); padding: 0.8rem; border-radius: 8px; box-shadow: 0 4px 15px var(--shadow-color); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
 .song-item-grid:hover { transform: translateY(-5px); }
 .song-item-grid.active-song { background-color: var(--accent-primary); color: white; }
 .song-item-grid.active-song .artist { color: var(--primary-bg); }
 .song-item-grid img { width: 100%; border-radius: 6px; aspect-ratio: 1 / 1; object-fit: cover; }
-.song-item-grid .title { font-weight: 500; margin-top: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.song-item-grid .artist { font-size: 0.9rem; color: var(--text-secondary); }
+.song-item-grid .title { font-weight: 500; margin-top: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; } /* Ukuran font judul disesuaikan */
+.song-item-grid .artist { font-size: 0.8rem; color: var(--text-secondary); } /* Ukuran font artis disesuaikan */
 .show-all-container { text-align: center; margin-top: 1.5rem; }
-#show-all-button, #hide-button { padding: 0.6rem 1.5rem; border: 1px solid var(--accent-primary); background-color: transparent; color: var(--accent-primary); border-radius: 20px; cursor: pointer; font-weight: 500; transition: all 0.3s; }
-#show-all-button:hover, #hide-button:hover { background-color: var(--accent-primary); color: white; }
+
+/* PERBAIKAN: Menggunakan class selector (.) bukan id selector (#) */
+.show-all-button, .hide-button { padding: 0.6rem 1.5rem; border: 1px solid var(--accent-primary); background-color: transparent; color: var(--accent-primary); border-radius: 20px; cursor: pointer; font-weight: 500; transition: all 0.3s; }
+.show-all-button:hover, .hide-button:hover { background-color: var(--accent-primary); color: white; }
 
 .desktop-container { display: none; }
 .main-header-mobile { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; background-color: var(--secondary-bg); box-shadow: 0 2px 10px var(--shadow-color); position: sticky; top: 0; z-index: 1000; }
@@ -82,6 +87,12 @@ body { padding-bottom: 90px; }
         gap: 2rem; 
         padding: 1.5rem; 
         padding-bottom: 140px; /* PENTING: Extra padding untuk floating player */
+    }
+
+    /* Mengembalikan style grid untuk desktop */
+    .song-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1.5rem;
     }
 
     /* --- Sidebar Kiri --- */
@@ -125,38 +136,25 @@ body { padding-bottom: 90px; }
     .playlist-header h2 { font-size: 1.5rem; color: var(--text-primary); }
     
     /* --- FLOATING PLAYER YANG MENGAPUNG (DESKTOP) --- */
-    /* 
-     * PENGATURAN LEBAR FLOATING PLAYER:
-     * - left & right: Jarak dari tepi layar (ubah nilai ini untuk mengatur lebar)
-     * - Semakin kecil nilai left/right, semakin lebar player
-     * - Semakin besar nilai left/right, semakin sempit player
-     * 
-     * CONTOH PENGATURAN LEBAR:
-     * - Player sangat lebar: left: 0.5rem; right: 0.5rem;
-     * - Player sedang: left: 1.5rem; right: 1.5rem; (default)
-     * - Player sempit: left: 10rem; right: 10rem;
-     * - Player hanya di tengah: left: 20%; right: 20%;
-     */
     .floating-player-container {
         position: fixed;
         bottom: 1.5rem;
-        left: 20rem;           /* UBAH INI: Jarak dari kiri (semakin kecil = lebih lebar) */
-        right: 22.5rem;          /* UBAH INI: Jarak dari kanan (semakin kecil = lebih lebar) */
-        height: 100px;           /* UBAH INI: Tinggi player */
+        left: 20rem;
+        right: 22.5rem;
+        height: 100px;
         padding: 1rem 1.5rem;
         background-color: var(--secondary-bg);
         border-radius: 1rem;
         display: grid;
-        grid-template-columns: 1fr 2fr 1fr;  /* UBAH INI: Proporsi kolom (info track | controls | progress) */
+        grid-template-columns: 1fr 2fr 1fr;
         align-items: center;
-        gap: 1.5rem;            /* UBAH INI: Jarak antar section dalam player */
-        z-index: 2000; /* Z-index tinggi untuk selalu di atas */
+        gap: 1.5rem;
+        z-index: 2000;
         box-shadow: 0 -8px 25px var(--shadow-color);
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    /* Tambahkan efek hover untuk floating player */
     .floating-player-container:hover {
         transform: translateY(-2px);
         box-shadow: 0 -12px 35px var(--shadow-color);
