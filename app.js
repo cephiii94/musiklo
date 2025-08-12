@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoLinkMobile = document.getElementById('logo-link-mobile');
     
     // Player Mobile
-    const playerContainerMobile = document.querySelector('.player-container-mobile');
     const playPauseButtonMobile = document.getElementById('play-pause-button-mobile');
     const nextButtonMobile = document.getElementById('next-button-mobile');
     const prevButtonMobile = document.getElementById('prev-button-mobile');
@@ -27,6 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const nowPlayingCardArt = document.getElementById('now-playing-card-art');
     const nowPlayingCardTitle = document.getElementById('now-playing-card-title');
     const nowPlayingCardArtist = document.getElementById('now-playing-card-artist');
+
+    // Elemen Lirik
+    const lyricsSection = document.querySelector('.lyrics-section');
+    const lyricsHeader = document.getElementById('lyrics-header');
+    const lyricsText = document.getElementById('lyrics-text');
 
     // === 2. STATE APLIKASI ===
     let player;
@@ -126,42 +130,64 @@ document.addEventListener('DOMContentLoaded', () => {
         if(currentTimeDesktop) currentTimeDesktop.textContent = formatTime(currentTime);
         if(totalTimeDesktop) totalTimeDesktop.textContent = formatTime(duration);
     }
+    
+    function cleanSongTitle(title) {
+        let cleanedTitle = title.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '');
+        cleanedTitle = cleanedTitle.replace(/official music video/i, '')
+                                   .replace(/official video/i, '')
+                                   .replace(/music video/i, '')
+                                   .replace(/official/i, '')
+                                   .replace(/lyric video/i, '')
+                                   .replace(/lyrics/i, '');
+        return cleanedTitle.trim();
+    }
+
+    async function displayLyrics(artist, title) {
+        if (!lyricsText) return;
+        const cleanedTitle = cleanSongTitle(title);
+        lyricsText.textContent = `Mencari lirik untuk "${cleanedTitle}"...`;
+        
+        try {
+            const response = await fetch(`https://lyrist.vercel.app/api/${encodeURIComponent(artist)}/${encodeURIComponent(cleanedTitle)}`);
+            if (!response.ok) throw new Error('Lirik tidak ditemukan.');
+            const data = await response.json();
+            const lyricsContent = data.lyrics ? data.lyrics.trim() : '';
+            lyricsText.textContent = lyricsContent ? lyricsContent : 'Lirik untuk lagu ini tidak tersedia.';
+        } catch (error) {
+            console.error("Lyrics fetch error:", error);
+            lyricsText.textContent = 'Maaf, lirik untuk lagu ini tidak dapat dimuat.';
+        }
+    }
+
     function updatePlayerUI(song) {
         if (!song) return;
         const title = decodeHtml(song.title);
         const artist = decodeHtml(song.artist);
         const youtubeUrl = `https://www.youtube.com/watch?v=${song.videoId}`;
 
-        // Update player mobile
         currentTrackArtMobile.src = song.thumbnailUrl;
         currentTrackTitleMobile.textContent = title;
         currentTrackArtistMobile.textContent = artist;
         
-        // Update player desktop
         const artDesktop = document.getElementById('current-track-art');
         const titleDesktop = document.getElementById('current-track-title');
         const artistDesktop = document.getElementById('current-track-artist');
-
         if(artDesktop) artDesktop.src = song.thumbnailUrl;
         if(titleDesktop) titleDesktop.textContent = title;
         if(artistDesktop) artistDesktop.textContent = artist;
 
-        // Update sidebar
-        const nowPlayingCardArt = document.getElementById('now-playing-card-art');
-        const nowPlayingCardTitle = document.getElementById('now-playing-card-title');
-        const nowPlayingCardArtist = document.getElementById('now-playing-card-artist');
         const nowPlayingYoutubeLink = document.getElementById('now-playing-youtube-link');
-
         if(nowPlayingCardArt) nowPlayingCardArt.src = song.thumbnailUrl;
         if(nowPlayingCardTitle) nowPlayingCardTitle.textContent = title;
         if(nowPlayingCardArtist) nowPlayingCardArtist.textContent = artist;
         if(nowPlayingYoutubeLink) nowPlayingYoutubeLink.href = youtubeUrl;
 
+        displayLyrics(artist, title);
 
-        // Update highlight lagu
         document.querySelectorAll('.song-item-grid.active-song').forEach(item => item.classList.remove('active-song'));
         document.querySelectorAll(`[data-video-id='${song.videoId}']`).forEach(el => el.classList.add('active-song'));
     }
+    
     function startProgressUpdater() {
         clearInterval(progressInterval);
         progressInterval = setInterval(updateProgress, 1000);
@@ -169,26 +195,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === 6. FUNGSI RENDER KONTEN & PLAYER ===
     function renderHomePage() {
+        // PERUBAHAN STRUKTUR HTML: Kontrol "show/hide" dipindahkan ke dalam header.
         mainContent.innerHTML = `
             <div id="main-content-scroll-area">
                 <section id="top-charts-section" class="playlist-section-desktop">
-                    <div class="playlist-header"><h2>Top Charts</h2></div>
+                    <div class="playlist-header">
+                        <h2>Top Charts</h2>
+                        <div id="top-charts-controls-desktop" class="show-all-container"></div>
+                    </div>
                     <div id="top-charts-container-desktop" class="song-grid"></div>
-                    <div id="top-charts-controls-desktop" class="show-all-container"></div>
                 </section>
                 <section id="koleksi-section" class="playlist-section-desktop">
-                    <div class="playlist-header"><h2>Koleksi Lokal</h2></div>
+                    <div class="playlist-header">
+                        <h2>Koleksi Lokal</h2>
+                        <div id="koleksi-controls-desktop" class="show-all-container"></div>
+                    </div>
                     <div id="koleksi-container-desktop" class="song-grid"></div>
                 </section>
             </div>`;
         mainContentMobile.innerHTML = `
             <section class="playlist-section-mobile">
-                <h2>Top Charts</h2>
+                <div class="playlist-header-mobile">
+                    <h2>Top Charts</h2>
+                    <div id="top-charts-controls-mobile" class="show-all-container"></div>
+                </div>
                 <div id="top-charts-container-mobile" class="song-grid"></div>
-                <div id="top-charts-controls-mobile" class="show-all-container"></div>
             </section>
             <section class="playlist-section-mobile">
-                <h2>Koleksi Lokal</h2>
+                <div class="playlist-header-mobile">
+                    <h2>Koleksi Lokal</h2>
+                    <div id="koleksi-controls-mobile" class="show-all-container"></div>
+                </div>
                 <div id="koleksi-container-mobile" class="song-grid"></div>
             </section>`;
         
@@ -198,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderFloatingPlayer() {
-        // PERUBAHAN STRUKTUR HTML PLAYER
         const floatingPlayerHTML = `
             <div class="floating-player-container">
                 <div class="current-track-info">
@@ -208,7 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p id="current-track-artist">musiklo</p>
                     </div>
                 </div>
-
                 <div class="player-core">
                     <div class="player-controls">
                         <button id="shuffle-button" title="Acak"><i class="fas fa-random"></i></button>
@@ -223,7 +258,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span id="total-time-display">0:00</span>
                     </div>
                 </div>
-                
                 <div class="volume-container">
                     <div class="volume-control">
                         <i class="fas fa-volume-high" id="volume-icon"></i>
@@ -264,7 +298,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if(controlsMobile) controlsMobile.innerHTML = controlsHTML;
         }
     }
-
 
     function renderKoleksi(playlist) {
         const containerDesktop = document.getElementById('koleksi-container-desktop');
@@ -364,42 +397,42 @@ document.addEventListener('DOMContentLoaded', () => {
             const index = parseInt(songItem.dataset.index, 10);
             const playlistSource = songItem.dataset.playlist;
             playSong(index, playlistSource);
-            return; // Hentikan eksekusi lebih lanjut
+            return;
         }
 
-        // --- LOGIKA BARU UNTUK SHOW/HIDE ---
+        // PERBAIKAN LOGIKA KLIK: Logika disederhanakan dan dibuat lebih andal.
         const showButton = event.target.closest('.show-all-button');
         const hideButton = event.target.closest('.hide-button');
 
-        if (showButton) {
-            const controlsContainer = showButton.parentElement;
-            const songContainer = controlsContainer.previousElementSibling;
-            
-            songContainer.querySelectorAll('.song-item-grid.hidden').forEach(el => el.classList.remove('hidden'));
-            controlsContainer.querySelector('.show-all-button').classList.add('hidden');
-            controlsContainer.querySelector('.hide-button').classList.remove('hidden');
-        }
-
-        if (hideButton) {
-            const controlsContainer = hideButton.parentElement;
-            const songContainer = controlsContainer.previousElementSibling;
-            const sectionContainer = controlsContainer.parentElement;
-
-            songContainer.querySelectorAll('.song-item-grid').forEach((el, index) => {
-                if (index >= 5) {
-                    el.classList.add('hidden');
+        if (showButton || hideButton) {
+            const section = (showButton || hideButton).closest('.playlist-section-desktop, .playlist-section-mobile');
+            if (section) {
+                const songContainer = section.querySelector('.song-grid');
+                const controlsContainer = section.querySelector('.show-all-container');
+                const currentShowButton = controlsContainer.querySelector('.show-all-button');
+                const currentHideButton = controlsContainer.querySelector('.hide-button');
+                
+                if (showButton) { // Jika "Lihat Semua" diklik
+                    songContainer.querySelectorAll('.song-item-grid.hidden').forEach(el => el.classList.remove('hidden'));
+                    currentShowButton.classList.add('hidden');
+                    currentHideButton.classList.remove('hidden');
+                } else { // Jika "Sembunyikan" diklik
+                    songContainer.querySelectorAll('.song-item-grid').forEach((el, index) => {
+                        if (index >= 5) el.classList.add('hidden');
+                    });
+                    currentHideButton.classList.add('hidden');
+                    currentShowButton.classList.remove('hidden');
+                    section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
-            });
-
-            controlsContainer.querySelector('.hide-button').classList.add('hidden');
-            controlsContainer.querySelector('.show-all-button').classList.remove('hidden');
-            
-            if(sectionContainer) {
-                sectionContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
     });
 
+    if (lyricsHeader && lyricsSection) {
+        lyricsHeader.addEventListener('click', () => {
+            lyricsSection.classList.toggle('active');
+        });
+    }
 
     playPauseButtonMobile.addEventListener('click', togglePlayPause);
     nextButtonMobile.addEventListener('click', playNext);
