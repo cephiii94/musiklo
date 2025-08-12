@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoLinkMobile = document.getElementById('logo-link-mobile');
     
     // Player Mobile
+    const playerContainerMobile = document.querySelector('.player-container-mobile'); // Selektor untuk player
     const playPauseButtonMobile = document.getElementById('play-pause-button-mobile');
     const nextButtonMobile = document.getElementById('next-button-mobile');
     const prevButtonMobile = document.getElementById('prev-button-mobile');
@@ -32,6 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const lyricsHeader = document.getElementById('lyrics-header');
     const lyricsText = document.getElementById('lyrics-text');
 
+    // PENAMBAHAN: Selektor untuk Navbar Mobile
+    const mobileNav = document.querySelector('.mobile-nav');
+
     // === 2. STATE APLIKASI ===
     let player;
     let topChartsPlaylist = [];
@@ -44,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastVolume = 80;
 
     // === 3. LOGIKA TEMA (DARK/LIGHT MODE) ===
+    // ... (Fungsi tema tidak diubah)
     const applyTheme = (theme) => {
         document.body.classList.remove('light-mode', 'dark-mode');
         document.body.classList.add(theme);
@@ -72,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // === 4. INISIALISASI YOUTUBE PLAYER ===
+    // ... (Fungsi YouTube Player tidak diubah)
     window.onYouTubeIframeAPIReady = function() {
         player = new YT.Player('youtube-player', {
             height: '0', width: '0',
@@ -93,9 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // === 5. FUNGSI-FUNGSI UI & SINKRONISASI ===
+    // ... (Fungsi UI tidak diubah)
     const decodeHtml = (html) => { const txt = document.createElement("textarea"); txt.innerHTML = html; return txt.value; };
     const formatTime = (seconds) => { const min = Math.floor(seconds / 60); const sec = Math.floor(seconds % 60).toString().padStart(2, '0'); return `${min}:${sec}`; };
-    
     function updateVolumeIcon(volume) {
         const volIconDesktop = document.getElementById('volume-icon');
         if(volIconDesktop) {
@@ -108,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updatePlayPauseIcons() {
         const iconMobile = document.getElementById('play-pause-icon-mobile');
         const iconDesktop = document.getElementById('play-pause-icon');
-        
         [iconMobile, iconDesktop].forEach(icon => {
             if(icon) {
                 icon.classList.remove('fa-play-circle', 'fa-pause-circle');
@@ -121,32 +126,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const duration = player.getDuration();
         const currentTime = player.getCurrentTime();
         const progress = (duration > 0) ? (currentTime / duration) * 100 : 0;
-        
         const progressBarDesktop = document.getElementById('progress-bar');
         const currentTimeDesktop = document.getElementById('current-time-display');
         const totalTimeDesktop = document.getElementById('total-time-display');
-
         if(progressBarDesktop) progressBarDesktop.value = progress;
         if(currentTimeDesktop) currentTimeDesktop.textContent = formatTime(currentTime);
         if(totalTimeDesktop) totalTimeDesktop.textContent = formatTime(duration);
     }
-    
     function cleanSongTitle(title) {
         let cleanedTitle = title.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '');
-        cleanedTitle = cleanedTitle.replace(/official music video/i, '')
-                                   .replace(/official video/i, '')
-                                   .replace(/music video/i, '')
-                                   .replace(/official/i, '')
-                                   .replace(/lyric video/i, '')
-                                   .replace(/lyrics/i, '');
+        cleanedTitle = cleanedTitle.replace(/official music video/i, '').replace(/official video/i, '').replace(/music video/i, '').replace(/official/i, '').replace(/lyric video/i, '').replace(/lyrics/i, '');
         return cleanedTitle.trim();
     }
-
     async function displayLyrics(artist, title) {
         if (!lyricsText) return;
         const cleanedTitle = cleanSongTitle(title);
         lyricsText.textContent = `Mencari lirik untuk "${cleanedTitle}"...`;
-        
         try {
             const response = await fetch(`https://lyrist.vercel.app/api/${encodeURIComponent(artist)}/${encodeURIComponent(cleanedTitle)}`);
             if (!response.ok) throw new Error('Lirik tidak ditemukan.');
@@ -158,44 +153,37 @@ document.addEventListener('DOMContentLoaded', () => {
             lyricsText.textContent = 'Maaf, lirik untuk lagu ini tidak dapat dimuat.';
         }
     }
-
     function updatePlayerUI(song) {
         if (!song) return;
         const title = decodeHtml(song.title);
         const artist = decodeHtml(song.artist);
         const youtubeUrl = `https://www.youtube.com/watch?v=${song.videoId}`;
-
         currentTrackArtMobile.src = song.thumbnailUrl;
         currentTrackTitleMobile.textContent = title;
         currentTrackArtistMobile.textContent = artist;
-        
         const artDesktop = document.getElementById('current-track-art');
         const titleDesktop = document.getElementById('current-track-title');
         const artistDesktop = document.getElementById('current-track-artist');
         if(artDesktop) artDesktop.src = song.thumbnailUrl;
         if(titleDesktop) titleDesktop.textContent = title;
         if(artistDesktop) artistDesktop.textContent = artist;
-
         const nowPlayingYoutubeLink = document.getElementById('now-playing-youtube-link');
         if(nowPlayingCardArt) nowPlayingCardArt.src = song.thumbnailUrl;
         if(nowPlayingCardTitle) nowPlayingCardTitle.textContent = title;
         if(nowPlayingCardArtist) nowPlayingCardArtist.textContent = artist;
         if(nowPlayingYoutubeLink) nowPlayingYoutubeLink.href = youtubeUrl;
-
         displayLyrics(artist, title);
-
         document.querySelectorAll('.song-item-grid.active-song').forEach(item => item.classList.remove('active-song'));
         document.querySelectorAll(`[data-video-id='${song.videoId}']`).forEach(el => el.classList.add('active-song'));
     }
-    
     function startProgressUpdater() {
         clearInterval(progressInterval);
         progressInterval = setInterval(updateProgress, 1000);
     }
 
     // === 6. FUNGSI RENDER KONTEN & PLAYER ===
+    // ... (Fungsi render tidak diubah)
     function renderHomePage() {
-        // PERUBAHAN STRUKTUR HTML: Kontrol "show/hide" dipindahkan ke dalam header.
         mainContent.innerHTML = `
             <div id="main-content-scroll-area">
                 <section id="top-charts-section" class="playlist-section-desktop">
@@ -228,12 +216,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div id="koleksi-container-mobile" class="song-grid"></div>
             </section>`;
-        
         renderFloatingPlayer();
         renderTopCharts(topChartsPlaylist);
         renderKoleksi(koleksiPlaylist);
     }
-
     function renderFloatingPlayer() {
         const floatingPlayerHTML = `
             <div class="floating-player-container">
@@ -268,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContent.insertAdjacentHTML('beforeend', floatingPlayerHTML);
         addDesktopPlayerListeners();
     }
-    
     function renderGrid(playlist, playlistName, limit = -1) {
         let gridHTML = '';
         const itemsToRender = limit === -1 ? playlist : playlist.slice(0, limit);
@@ -279,26 +264,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         return gridHTML;
     }
-
     function renderTopCharts(playlist) {
         const containerDesktop = document.getElementById('top-charts-container-desktop');
         const containerMobile = document.getElementById('top-charts-container-mobile');
         const controlsDesktop = document.getElementById('top-charts-controls-desktop');
         const controlsMobile = document.getElementById('top-charts-controls-mobile');
-        
         if (!containerDesktop || !containerMobile) return;
-        
         const gridHTML = renderGrid(playlist, 'topcharts');
         containerDesktop.innerHTML = gridHTML;
         containerMobile.innerHTML = gridHTML;
-
         if (playlist.length > 5) {
             const controlsHTML = `<button class="show-all-button">Lihat Semua</button><button class="hide-button hidden">Sembunyikan</button>`;
             if(controlsDesktop) controlsDesktop.innerHTML = controlsHTML;
             if(controlsMobile) controlsMobile.innerHTML = controlsHTML;
         }
     }
-
     function renderKoleksi(playlist) {
         const containerDesktop = document.getElementById('koleksi-container-desktop');
         const containerMobile = document.getElementById('koleksi-container-mobile');
@@ -307,7 +287,6 @@ document.addEventListener('DOMContentLoaded', () => {
         containerDesktop.innerHTML = gridHTML;
         containerMobile.innerHTML = gridHTML;
     }
-
     function renderSearchResults(playlist, query) {
         const gridHTML = renderGrid(playlist, 'search');
         mainContent.innerHTML = `<div id="main-content-scroll-area"><section class="playlist-section-desktop"><div class="playlist-header"><h2>Hasil untuk "${query}"</h2></div><div class="song-grid">${gridHTML}</div></section></div>`;
@@ -328,6 +307,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (player && typeof player.loadVideoById === 'function') {
                 player.loadVideoById(song.videoId);
                 updatePlayerUI(song);
+                // PENAMBAHAN: Tampilkan player mobile jika tersembunyi
+                if (playerContainerMobile.classList.contains('hidden')) {
+                    playerContainerMobile.classList.remove('hidden');
+                }
             }
         }
     }
@@ -337,6 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const togglePlayPause = () => { if (!player || typeof player.playVideo !== 'function' || currentIndex === -1) return; isPlaying ? player.pauseVideo() : player.playVideo(); };
 
     // === 8. FUNGSI PENCARIAN & MEMUAT DATA ===
+    // ... (Fungsi data tidak diubah, tetap menggunakan Netlify Functions)
     async function handleSearch(query) {
         if (!query) return;
         mainContent.innerHTML = '<div class="loader"></div>';
@@ -371,6 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const returnToHome = () => { searchInputDesktop.value = ''; searchInputMobile.value = ''; loadInitialData(); };
 
     // === 9. EVENT LISTENERS ===
+    // ... (Event listener desktop tidak diubah)
     function addDesktopPlayerListeners() {
         document.getElementById('play-pause-button')?.addEventListener('click', togglePlayPause);
         document.getElementById('next-button')?.addEventListener('click', playNext);
@@ -399,11 +384,8 @@ document.addEventListener('DOMContentLoaded', () => {
             playSong(index, playlistSource);
             return;
         }
-
-        // PERBAIKAN LOGIKA KLIK: Logika disederhanakan dan dibuat lebih andal.
         const showButton = event.target.closest('.show-all-button');
         const hideButton = event.target.closest('.hide-button');
-
         if (showButton || hideButton) {
             const section = (showButton || hideButton).closest('.playlist-section-desktop, .playlist-section-mobile');
             if (section) {
@@ -411,12 +393,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const controlsContainer = section.querySelector('.show-all-container');
                 const currentShowButton = controlsContainer.querySelector('.show-all-button');
                 const currentHideButton = controlsContainer.querySelector('.hide-button');
-                
-                if (showButton) { // Jika "Lihat Semua" diklik
+                if (showButton) {
                     songContainer.querySelectorAll('.song-item-grid.hidden').forEach(el => el.classList.remove('hidden'));
                     currentShowButton.classList.add('hidden');
                     currentHideButton.classList.remove('hidden');
-                } else { // Jika "Sembunyikan" diklik
+                } else {
                     songContainer.querySelectorAll('.song-item-grid').forEach((el, index) => {
                         if (index >= 5) el.classList.add('hidden');
                     });
@@ -444,6 +425,48 @@ document.addEventListener('DOMContentLoaded', () => {
     searchButtonMobile.addEventListener('click', () => handleSearch(searchInputMobile.value.trim()));
     logoLinkDesktop.addEventListener('click', (e) => { e.preventDefault(); returnToHome(); });
     logoLinkMobile.addEventListener('click', (e) => { e.preventDefault(); returnToHome(); });
+
+    // PENAMBAHAN: Fungsi dan Event Listener untuk Navigasi Mobile
+    function handleMobileNav(e) {
+        e.preventDefault();
+        const target = e.target.closest('li');
+        if (!target) return;
+
+        const page = target.dataset.page;
+        if (!page) return;
+
+        mobileNav.querySelectorAll('li').forEach(item => item.classList.remove('active'));
+        target.classList.add('active');
+
+        switch (page) {
+            case 'home':
+                returnToHome();
+                break;
+            case 'search':
+                searchInputMobile.focus();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                break;
+            case 'library':
+                mainContent.innerHTML = ''; // Kosongkan konten desktop
+                mainContentMobile.innerHTML = `
+                    <section class="playlist-section-mobile">
+                        <div class="playlist-header-mobile">
+                            <h2>Koleksi Lokal</h2>
+                        </div>
+                        <div id="koleksi-container-mobile" class="song-grid"></div>
+                    </section>`;
+                renderKoleksi(koleksiPlaylist);
+                break;
+            case 'discover':
+                mainContent.innerHTML = ''; // Kosongkan konten desktop
+                mainContentMobile.innerHTML = `<div style="text-align: center; padding: 4rem 1rem;"><h2>Halaman Discover</h2><p>Fitur ini akan segera hadir, Tuan Cecep!</p></div>`;
+                break;
+        }
+    }
+
+    if (mobileNav) {
+        mobileNav.addEventListener('click', handleMobileNav);
+    }
 
     // === 10. INISIALISASI APLIKASI ===
     initializeTheme();

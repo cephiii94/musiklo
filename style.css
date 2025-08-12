@@ -2,7 +2,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css');
 
-
 :root {
     --soft-blue: #89cff0;
     --soft-blue-dark: #6495ed;
@@ -29,19 +28,19 @@ body.dark-mode { --primary-bg: #1e1b2e; --secondary-bg: #2a2a3a; --tertiary-bg: 
 /* ======================================= */
 /* === TAMPILAN MOBILE & TABLET (<1024px) === */
 /* ======================================= */
-body { padding-bottom: 100px; }
+/* PENYESUAIAN: Padding bawah ditambah untuk mengakomodasi navbar dan player */
+body { padding-bottom: 160px; } 
+
 .main-content-mobile { padding: 1rem; padding-bottom: 4rem; }
 .playlist-section-mobile { margin-bottom: 2rem; }
 
-/* PERUBAHAN: Header untuk setiap section di mobile */
 .playlist-header-mobile {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
-    /* PERUBAHAN: Membuat header section menjadi sticky */
     position: sticky;
-    top: 58px; /* Menempel di bawah header utama */
+    top: 58px; 
     background-color: var(--primary-bg);
     z-index: 900;
     padding: 0.5rem 0;
@@ -86,8 +85,68 @@ body { padding-bottom: 100px; }
 .main-header-mobile .search-bar input:focus { border-color: var(--accent-primary); }
 .main-header-mobile .search-bar button { padding: 0.5rem 1rem; border: none; background-color: var(--accent-secondary); color: white; border-radius: 0 20px 20px 0; cursor: pointer; }
 
-/* Player Mobile Floating */
-.player-container-mobile { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); width: calc(100% - 2rem); max-width: 500px; height: 70px; z-index: 1500; background-color: rgba(255, 255, 255, 0.7); border: 1px solid var(--border-color); border-radius: 1rem; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: space-between; padding: 0 1rem; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+/* Style untuk Navbar Mobile */
+.mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 65px;
+    background-color: var(--secondary-bg);
+    box-shadow: 0 -2px 15px var(--shadow-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+}
+.mobile-nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+.mobile-nav li a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    font-size: 0.7rem;
+    transition: color 0.2s;
+}
+.mobile-nav li a i {
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+}
+.mobile-nav li.active a {
+    color: var(--accent-primary);
+}
+
+/* Player Mobile Floating, posisinya di atas navbar */
+.player-container-mobile {
+    position: fixed;
+    bottom: calc(65px + 1rem); /* 65px tinggi navbar + 1rem jarak */
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 2rem);
+    max-width: 500px;
+    height: 70px;
+    z-index: 1500;
+    background-color: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
 body.dark-mode .player-container-mobile { background-color: rgba(42, 42, 58, 0.7); }
 .player-container-mobile .current-track-info { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
 .player-container-mobile .current-track-info img { width: 50px; height: 50px; border-radius: 0.5rem; flex-shrink: 0; }
@@ -104,7 +163,7 @@ body.dark-mode .player-container-mobile { background-color: rgba(42, 42, 58, 0.7
 /* ======================================= */
 @media (min-width: 1024px) {
     body { padding-bottom: 120px; }
-    .main-header-mobile, .main-content-mobile, .player-container-mobile { display: none; }
+    .main-header-mobile, .main-content-mobile, .player-container-mobile, .mobile-nav { display: none; }
     .desktop-container { display: grid; grid-template-columns: 280px 1fr 320px; height: calc(100vh - 120px); gap: 2rem; padding: 1.5rem; padding-bottom: 140px; }
     .song-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1.5rem; }
 
@@ -137,14 +196,13 @@ body.dark-mode .player-container-mobile { background-color: rgba(42, 42, 58, 0.7
     #main-content-scroll-area { -ms-overflow-style: none; scrollbar-width: none; }
     .playlist-section-desktop { margin-bottom: 2.5rem; }
     
-    /* PERUBAHAN: Membuat header section menjadi sticky */
     .playlist-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1rem;
         position: sticky;
-        top: -1px; /* Trik agar menempel sempurna di atas */
+        top: -1px; 
         background-color: var(--primary-bg);
         z-index: 900;
         padding-top: 1rem;

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>musiklo - Dengarkan Musik Favoritmu</title>
+    <!-- Tautan ke file CSS eksternal -->
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +31,7 @@
         </div>
     </header>
 
-    <!-- Kontainer Utama untuk Tampilan Desktop -->
+    <!-- Kontainer utama untuk tampilan desktop -->
     <div class="desktop-container">
 
         <!-- === SIDEBAR KIRI === -->
@@ -79,13 +80,10 @@
         <!-- === KONTEN UTAMA === -->
         <main class="main-content">
             <!-- Konten (Top Charts, Koleksi, dll.) akan di-render oleh JS di sini -->
-            
-            <!-- Player yang mengapung akan di-render oleh JS di sini juga -->
         </main>
 
         <!-- === SIDEBAR KANAN === -->
         <aside class="right-sidebar">
-
             <div class="now-playing-card">
                  <img id="now-playing-card-art" src="https://placehold.co/300x300/333/fff?text=musiklo" alt="Now Playing Art">
                  <a href="#" id="now-playing-youtube-link" target="_blank" title="Lihat di YouTube"><i class="fab fa-youtube"></i></a>
@@ -98,15 +96,15 @@
                  </div>
             </div>
 
-                <section class="lyrics-section">
-        <div class="lyrics-header" id="lyrics-header">
-            <h3>Lirik</h3>
-            <i id="lyrics-chevron" class="fas fa-chevron-down"></i>
-        </div>
-        <div class="lyrics-content" id="lyrics-content">
-            <p id="lyrics-text">Pilih lagu untuk melihat lirik...</p>
-        </div>
-    </section>
+            <section class="lyrics-section">
+                <div class="lyrics-header" id="lyrics-header">
+                    <h3>Lirik</h3>
+                    <i id="lyrics-chevron" class="fas fa-chevron-down"></i>
+                </div>
+                <div class="lyrics-content" id="lyrics-content">
+                    <p id="lyrics-text">Pilih lagu untuk melihat lirik...</p>
+                </div>
+            </section>
 
             <section class="tags-section">
                 <h3>Tags</h3>
@@ -126,13 +124,22 @@
                 <ul class="played-list">
                 </ul>
             </section>
-
         </aside>
 
     </div>
+    
+    <!-- === NAVBAR BAWAH (HANYA UNTUK MOBILE) === -->
+    <nav class="mobile-nav">
+        <ul>
+            <li class="active"><a href="#"><i class="fas fa-home"></i><span>Home</span></a></li>
+            <li><a href="#"><i class="fas fa-compass"></i><span>Discover</span></a></li>
+            <li><a href="#"><i class="fas fa-search"></i><span>Search</span></a></li>
+            <li><a href="#"><i class="fas fa-layer-group"></i><span>Library</span></a></li>
+        </ul>
+    </nav>
 
-    <!-- Player Bawah (HANYA UNTUK MOBILE) -->
-    <footer class="player-container-mobile">
+    <!-- Player Bawah (HANYA UNTUK MOBILE) - Diberi class 'hidden' -->
+    <footer class="player-container-mobile hidden">
         <div class="current-track-info">
             <img id="current-track-art-mobile" src="https://placehold.co/60x60/333/fff?text=?" alt="Album Art">
             <div class="track-details">
@@ -147,8 +154,10 @@
         </div>
     </footer>
 
+    <!-- Div untuk YouTube Player API -->
     <div id="youtube-player" style="display: none;"></div>
 
+    <!-- Tautan ke YouTube API dan file JavaScript eksternal -->
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="app.js"></script>
 
