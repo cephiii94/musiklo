@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBarMobile = document.getElementById('progress-bar-mobile');
     const currentTimeMobileDisplay = document.getElementById('current-time-mobile');
     const totalTimeMobileDisplay = document.getElementById('total-time-mobile');
-    const volumeIconMobile = document.getElementById('volume-icon-mobile'); // Ikon volume baru
+    const shuffleButtonMobile = document.getElementById('shuffle-button-mobile');
+    const repeatButtonMobile = document.getElementById('repeat-button-mobile');
     const mobileNav = document.querySelector('.mobile-nav');
     
     // Sidebar Kanan
@@ -43,11 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let topChartsPlaylist = [];
     let koleksiPlaylist = [];
     let currentPlaylist = [];
+    let originalPlaylist = []; // Untuk menyimpan urutan asli saat shuffle
     let activePlaylistSource = null;
     let currentIndex = -1;
     let isPlaying = false;
     let progressInterval;
-    let lastVolume = 80;
+    let isShuffle = false;
+    let repeatMode = 'none'; // 'none', 'all', 'one'
 
     // === 3. LOGIKA TEMA (DARK/LIGHT MODE) ===
     const applyTheme = (theme) => {
@@ -85,41 +88,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     function onPlayerReady(event) {
-        const initialVolume = 80;
-        player.setVolume(initialVolume);
-        updateVolumeIcon(initialVolume);
+        player.setVolume(80);
     }
     function onPlayerStateChange(event) {
         isPlaying = (event.data === YT.PlayerState.PLAYING);
         if (isPlaying) startProgressUpdater();
         else clearInterval(progressInterval);
         updatePlayPauseIcons();
-        if (event.data === YT.PlayerState.ENDED) playNext();
+        if (event.data === YT.PlayerState.ENDED) {
+            if (repeatMode === 'one') {
+                player.seekTo(0);
+                player.playVideo();
+            } else {
+                playNext();
+            }
+        }
     }
 
     // === 5. FUNGSI-FUNGSI UI & SINKRONISASI ===
     const decodeHtml = (html) => { const txt = document.createElement("textarea"); txt.innerHTML = html; return txt.value; };
     const formatTime = (seconds) => { const min = Math.floor(seconds / 60); const sec = Math.floor(seconds % 60).toString().padStart(2, '0'); return `${min}:${sec}`; };
     
-    // Disesuaikan untuk mengontrol ikon desktop dan mobile
-    function updateVolumeIcon(volume, isMuted) {
-        const volIconDesktop = document.getElementById('volume-icon');
-        const volIconMobile = document.getElementById('volume-icon-mobile');
-
-        [volIconDesktop, volIconMobile].forEach(icon => {
-            if (icon) {
-                icon.classList.remove('fa-volume-high', 'fa-volume-low', 'fa-volume-xmark');
-                if (isMuted || volume === 0) {
-                    icon.classList.add('fa-volume-xmark');
-                } else if (volume <= 50) {
-                    icon.classList.add('fa-volume-low');
-                } else {
-                    icon.classList.add('fa-volume-high');
-                }
-            }
-        });
-    }
-
     function updatePlayPauseIcons() {
         const iconMobile = document.getElementById('play-pause-icon-mobile');
         const iconDesktop = document.getElementById('play-pause-icon');
@@ -137,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentTime = player.getCurrentTime();
         const progressPercent = (duration > 0) ? (currentTime / duration) * 100 : 0;
         
-        // Update progress bar desktop
         const progressBarDesktop = document.getElementById('progress-bar');
         const currentTimeDesktop = document.getElementById('current-time-display');
         const totalTimeDesktop = document.getElementById('total-time-display');
@@ -145,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if(currentTimeDesktop) currentTimeDesktop.textContent = formatTime(currentTime);
         if(totalTimeDesktop) totalTimeDesktop.textContent = formatTime(duration);
 
-        // Update progress bar mobile
         if(progressBarMobile) progressBarMobile.value = progressPercent;
         if(currentTimeMobileDisplay) currentTimeMobileDisplay.textContent = formatTime(currentTime);
         if(totalTimeMobileDisplay) totalTimeMobileDisplay.textContent = formatTime(duration);
@@ -313,10 +300,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === 7. LOGIKA PEMUTARAN LAGU ===
     function playSong(index, playlistSource) {
-        activePlaylistSource = playlistSource;
-        if (playlistSource === 'topcharts') currentPlaylist = topChartsPlaylist;
-        else if (playlistSource === 'koleksi') currentPlaylist = koleksiPlaylist;
-        else if (playlistSource === 'search') { /* currentPlaylist sudah di set saat search */ }
+        if (activePlaylistSource !== playlistSource) {
+            activePlaylistSource = playlistSource;
+            if (playlistSource === 'topcharts') originalPlaylist = [...topChartsPlaylist];
+            else if (playlistSource === 'koleksi') originalPlaylist = [...koleksiPlaylist];
+            else if (playlistSource === 'search') originalPlaylist = [...currentPlaylist];
+            
+            if (isShuffle) {
+                currentPlaylist = [...originalPlaylist].sort(() => Math.random() - 0.5);
+            } else {
+                currentPlaylist = [...originalPlaylist];
+            }
+        }
         
         if (index >= 0 && index < currentPlaylist.length) {
             currentIndex = index;
@@ -331,8 +326,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const playNext = () => { if (currentPlaylist.length === 0) return; const nextIndex = (currentIndex + 1) % currentPlaylist.length; playSong(nextIndex, activePlaylistSource); };
-    const playPrev = () => { if (currentPlaylist.length === 0) return; const prevIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length; playSong(prevIndex, activePlaylistSource); };
+    const playNext = () => {
+        if (currentPlaylist.length === 0) return;
+        let nextIndex;
+        if (isShuffle) {
+            nextIndex = Math.floor(Math.random() * currentPlaylist.length);
+        } else {
+            nextIndex = (currentIndex + 1) % currentPlaylist.length;
+        }
+        playSong(nextIndex, activePlaylistSource);
+    };
+    const playPrev = () => {
+        if (currentPlaylist.length === 0) return;
+        const prevIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
+        playSong(prevIndex, activePlaylistSource);
+    };
     const togglePlayPause = () => { if (!player || typeof player.playVideo !== 'function' || currentIndex === -1) return; isPlaying ? player.pauseVideo() : player.playVideo(); };
 
     // === 8. FUNGSI PENCARIAN & MEMUAT DATA ===
@@ -371,37 +379,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === 9. EVENT LISTENERS ===
     function addDesktopPlayerListeners() {
-        const volumeBar = document.getElementById('volume-bar');
-        const volumeIcon = document.getElementById('volume-icon');
+        const shuffleButton = document.getElementById('shuffle-button');
+        const repeatButton = document.getElementById('repeat-button');
 
         document.getElementById('play-pause-button')?.addEventListener('click', togglePlayPause);
         document.getElementById('next-button')?.addEventListener('click', playNext);
         document.getElementById('prev-button')?.addEventListener('click', playPrev);
+        shuffleButton?.addEventListener('click', toggleShuffle);
+        repeatButton?.addEventListener('click', toggleRepeat);
         
-        if (volumeBar) {
-            volumeBar.addEventListener('input', (e) => {
-                if(player && typeof player.setVolume === 'function') {
-                    const newVolume = e.target.value;
-                    player.setVolume(newVolume);
-                    if (player.isMuted()) player.unMute();
-                    updateVolumeIcon(newVolume, false);
-                }
-            });
-        }
-        
-        if (volumeIcon) {
-            volumeIcon.addEventListener('click', () => {
-                if (!player) return;
-                if (player.isMuted()) {
-                    player.unMute();
-                    updateVolumeIcon(player.getVolume(), false);
-                } else {
-                    player.mute();
-                    updateVolumeIcon(player.getVolume(), true);
-                }
-            });
-        }
-
         document.getElementById('progress-bar')?.addEventListener('input', (e) => {
             if(currentIndex !== -1 && player && typeof player.seekTo === 'function') {
                 player.seekTo(player.getDuration() * (e.target.value / 100));
@@ -460,17 +446,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // FUNGSI MUTE/UNMUTE UNTUK MOBILE
-    volumeIconMobile?.addEventListener('click', () => {
-        if (!player) return;
-        if (player.isMuted()) {
-            player.unMute();
-            updateVolumeIcon(player.getVolume(), false);
-        } else {
-            player.mute();
-            updateVolumeIcon(player.getVolume(), true);
-        }
-    });
+    // FUNGSI SHUFFLE & REPEAT UNTUK MOBILE
+    shuffleButtonMobile?.addEventListener('click', toggleShuffle);
+    repeatButtonMobile?.addEventListener('click', toggleRepeat);
     
     const performSearch = (e) => { if (e.key === 'Enter') handleSearch(e.target.value.trim()); };
     searchInputDesktop.addEventListener('keyup', performSearch);
@@ -483,34 +461,20 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const target = e.target.closest('li');
         if (!target) return;
-
         const page = target.dataset.page;
         if (!page) return;
-
         mobileNav.querySelectorAll('li').forEach(item => item.classList.remove('active'));
         target.classList.add('active');
-
         switch (page) {
-            case 'home':
-                returnToHome();
-                break;
-            case 'search':
-                searchInputMobile.focus();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                break;
+            case 'home': returnToHome(); break;
+            case 'search': searchInputMobile.focus(); window.scrollTo({ top: 0, behavior: 'smooth' }); break;
             case 'library':
-                mainContent.innerHTML = ''; // Kosongkan konten desktop
-                mainContentMobile.innerHTML = `
-                    <section class="playlist-section-mobile">
-                        <div class="playlist-header-mobile">
-                            <h2>Koleksi Lokal</h2>
-                        </div>
-                        <div id="koleksi-container-mobile" class="song-grid"></div>
-                    </section>`;
+                mainContent.innerHTML = '';
+                mainContentMobile.innerHTML = `<section class="playlist-section-mobile"><div class="playlist-header-mobile"><h2>Koleksi Lokal</h2></div><div id="koleksi-container-mobile" class="song-grid"></div></section>`;
                 renderKoleksi(koleksiPlaylist);
                 break;
             case 'discover':
-                mainContent.innerHTML = ''; // Kosongkan konten desktop
+                mainContent.innerHTML = '';
                 mainContentMobile.innerHTML = `<div style="text-align: center; padding: 4rem 1rem;"><h2>Halaman Discover</h2><p>Fitur ini akan segera hadir, Tuan Cecep!</p></div>`;
                 break;
         }
@@ -520,7 +484,61 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileNav.addEventListener('click', handleMobileNav);
     }
 
-    // === 10. INISIALISASI APLIKASI ===
+    // === 10. FUNGSI LOGIKA PLAYER TAMBAHAN ===
+    function toggleShuffle() {
+        isShuffle = !isShuffle;
+        const currentSong = currentPlaylist[currentIndex];
+
+        if (isShuffle) {
+            currentPlaylist = [...originalPlaylist].sort(() => Math.random() - 0.5);
+            // Cari posisi lagu yang sedang diputar di playlist yang sudah diacak
+            currentIndex = currentPlaylist.findIndex(song => song.videoId === currentSong.videoId);
+        } else {
+            currentPlaylist = [...originalPlaylist];
+            // Kembalikan ke posisi semula
+            currentIndex = currentPlaylist.findIndex(song => song.videoId === currentSong.videoId);
+        }
+        updateShuffleIcons();
+    }
+
+    function toggleRepeat() {
+        if (repeatMode === 'none') repeatMode = 'all';
+        else if (repeatMode === 'all') repeatMode = 'one';
+        else repeatMode = 'none';
+        updateRepeatIcons();
+    }
+
+    function updateShuffleIcons() {
+        const shuffleButtons = [document.getElementById('shuffle-button'), shuffleButtonMobile];
+        shuffleButtons.forEach(btn => {
+            if (btn) {
+                btn.classList.toggle('active', isShuffle);
+            }
+        });
+    }
+
+    function updateRepeatIcons() {
+        const repeatButtons = [document.getElementById('repeat-button'), repeatButtonMobile];
+        repeatButtons.forEach(btn => {
+            if (btn) {
+                const icon = btn.querySelector('i');
+                btn.classList.remove('active', 'repeat-one');
+                icon.classList.remove('fa-redo', 'fa-1');
+
+                if (repeatMode === 'all') {
+                    btn.classList.add('active');
+                    icon.classList.add('fa-redo');
+                } else if (repeatMode === 'one') {
+                    btn.classList.add('active', 'repeat-one');
+                    icon.classList.add('fa-1'); // Menggunakan ikon angka 1 dari Font Awesome
+                } else {
+                    icon.classList.add('fa-redo');
+                }
+            }
+        });
+    }
+
+    // === 11. INISIALISASI APLIKASI ===
     initializeTheme();
     loadInitialData();
 });

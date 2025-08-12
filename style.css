@@ -87,7 +87,7 @@ body { padding-bottom: 160px; }
 .player-art-mobile {
     width: 80px;
     height: 80px;
-    border-radius: 50%;
+    border-radius: 20px;
     object-fit: cover;
     justify-self: center; /* Memastikan gambar di tengah kolomnya */
 }
@@ -185,24 +185,29 @@ body { padding-bottom: 160px; }
     border: none;
 }
 
-/* Volume Control di Kolom Kanan */
-.volume-container-mobile {
-    width: 50px;
-    height: 50px;
+/* Kolom Kanan: Shuffle & Repeat */
+.player-options-mobile {
     display: flex;
+    flex-direction: column; /* Menyusun tombol secara vertikal */
     align-items: center;
-    justify-content: center;
-    justify-self: center; /* Memastikan di tengah kolomnya */
-    cursor: pointer;
+    justify-content: space-evenly; /* Memberi jarak merata */
+    height: 100%;
+    justify-self: center;
 }
 
-
-
-#volume-icon-mobile {
-    position: absolute;
+.player-options-mobile button {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
     color: var(--text-secondary);
-    font-size: 1rem;
     cursor: pointer;
+    padding: 5px;
+}
+
+/* Style untuk tombol saat aktif */
+.player-options-mobile button.active,
+.player-controls button.active {
+    color: var(--accent-primary);
 }
 
 
