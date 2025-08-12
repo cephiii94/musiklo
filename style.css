@@ -1,5 +1,7 @@
 /* Menggunakan font Poppins untuk tampilan yang modern */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css');
+
 
 :root {
     --soft-blue: #89cff0;
@@ -27,24 +29,22 @@ body.dark-mode { --primary-bg: #1e1b2e; --secondary-bg: #2a2a3a; --tertiary-bg: 
 /* ======================================= */
 /* === TAMPILAN MOBILE & TABLET (<1024px) === */
 /* ======================================= */
-body { padding-bottom: 90px; }
-.main-content-mobile { padding: 1rem; padding-bottom: 4rem; } /* Mengurangi padding horizontal */
+body { padding-bottom: 100px; /* Menambah sedikit ruang untuk player floating */ }
+.main-content-mobile { padding: 1rem; padding-bottom: 4rem; }
 .playlist-section-mobile { margin-bottom: 2rem; }
 .playlist-section-mobile h2 { margin-bottom: 1rem; color: var(--text-primary); }
 
-/* PERBAIKAN: Mengubah ukuran grid untuk mobile */
-.song-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; } /* Ukuran kartu lebih kecil, jarak lebih rapat */
+.song-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; }
 
 .song-item-grid { background-color: var(--secondary-bg); padding: 0.8rem; border-radius: 8px; box-shadow: 0 4px 15px var(--shadow-color); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
 .song-item-grid:hover { transform: translateY(-5px); }
 .song-item-grid.active-song { background-color: var(--accent-primary); color: white; }
 .song-item-grid.active-song .artist { color: var(--primary-bg); }
 .song-item-grid img { width: 100%; border-radius: 6px; aspect-ratio: 1 / 1; object-fit: cover; }
-.song-item-grid .title { font-weight: 500; margin-top: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; } /* Ukuran font judul disesuaikan */
-.song-item-grid .artist { font-size: 0.8rem; color: var(--text-secondary); } /* Ukuran font artis disesuaikan */
+.song-item-grid .title { font-weight: 500; margin-top: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; }
+.song-item-grid .artist { font-size: 0.8rem; color: var(--text-secondary); }
 .show-all-container { text-align: center; margin-top: 1.5rem; }
 
-/* PERBAIKAN: Menggunakan class selector (.) bukan id selector (#) */
 .show-all-button, .hide-button { padding: 0.6rem 1.5rem; border: 1px solid var(--accent-primary); background-color: transparent; color: var(--accent-primary); border-radius: 20px; cursor: pointer; font-weight: 500; transition: all 0.3s; }
 .show-all-button:hover, .hide-button:hover { background-color: var(--accent-primary); color: white; }
 
@@ -58,10 +58,35 @@ body { padding-bottom: 90px; }
 .main-header-mobile .search-bar input:focus { border-color: var(--accent-primary); }
 .main-header-mobile .search-bar button { padding: 0.5rem 1rem; border: none; background-color: var(--accent-secondary); color: white; border-radius: 0 20px 20px 0; cursor: pointer; }
 
-/* Player Bawah (HANYA MOBILE) */
-.player-container-mobile { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; z-index: 1500; background-color: var(--secondary-bg); border-top: 1px solid var(--border-color); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: space-between; padding: 0 1rem; }
+/* --- PERUBAHAN PLAYER MOBILE MENJADI FLOATING --- */
+.player-container-mobile {
+    position: fixed;
+    bottom: 1rem; /* Mengambang 1rem dari bawah */
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 2rem); /* Lebar dengan margin 1rem di kiri dan kanan */
+    max-width: 500px; /* Lebar maksimum untuk layar tablet */
+    height: 70px;
+    z-index: 1500;
+    background-color: rgba(255, 255, 255, 0.7); /* Warna dasar dengan transparansi */
+    border: 1px solid var(--border-color);
+    border-radius: 1rem; /* Sudut membulat */
+    backdrop-filter: blur(10px); /* Efek kaca buram */
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1); /* Efek bayangan untuk mengambang */
+}
+
+/* Penyesuaian warna untuk dark mode */
+body.dark-mode .player-container-mobile {
+    background-color: rgba(42, 42, 58, 0.7); /* Warna dasar dark dengan transparansi */
+}
+
 .player-container-mobile .current-track-info { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
-.player-container-mobile .current-track-info img { width: 50px; height: 50px; border-radius: 6px; flex-shrink: 0; }
+.player-container-mobile .current-track-info img { width: 50px; height: 50px; border-radius: 0.5rem; flex-shrink: 0; }
 .player-container-mobile .track-details { overflow: hidden; }
 .player-container-mobile .track-details p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .player-container-mobile .track-details #current-track-title-mobile { font-weight: 600; color: var(--text-primary); }
@@ -74,22 +99,20 @@ body { padding-bottom: 90px; }
 /* === TAMPILAN DESKTOP (>= 1024px) === */
 /* ======================================= */
 @media (min-width: 1024px) {
-    /* PERUBAHAN UTAMA: Tambahkan padding bottom untuk floating player */
     body { 
-        padding-bottom: 120px; /* Space untuk floating player */
+        padding-bottom: 120px;
     }
     
     .main-header-mobile, .main-content-mobile, .player-container-mobile { display: none; }
     .desktop-container { 
         display: grid; 
         grid-template-columns: 280px 1fr 320px; 
-        height: calc(100vh - 120px); /* Kurangi tinggi untuk floating player */
+        height: calc(100vh - 120px);
         gap: 2rem; 
         padding: 1.5rem; 
-        padding-bottom: 140px; /* PENTING: Extra padding untuk floating player */
+        padding-bottom: 140px;
     }
 
-    /* Mengembalikan style grid untuk desktop */
     .song-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         gap: 1.5rem;
@@ -126,7 +149,7 @@ body { padding-bottom: 90px; }
     #main-content-scroll-area { 
         overflow-y: auto; 
         flex-grow: 1; 
-        padding: 0 1rem 140px 0; /* PENTING: Padding bawah lebih besar untuk floating player */
+        padding: 0 1rem 140px 0;
     }
     #main-content-scroll-area::-webkit-scrollbar { display: none; }
     #main-content-scroll-area { -ms-overflow-style: none; scrollbar-width: none; }
@@ -135,7 +158,7 @@ body { padding-bottom: 90px; }
     .playlist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     .playlist-header h2 { font-size: 1.5rem; color: var(--text-primary); }
     
-    /* --- FLOATING PLAYER YANG MENGAPUNG (DESKTOP) --- */
+    /* --- STYLE FLOATING PLAYER DESKTOP --- */
     .floating-player-container {
         position: fixed;
         bottom: 1.5rem;
@@ -146,49 +169,54 @@ body { padding-bottom: 90px; }
         background-color: var(--secondary-bg);
         border-radius: 1rem;
         display: grid;
-        grid-template-columns: 1fr 2fr 1fr;
+        grid-template-columns: auto 1fr auto; /* Tata letak baru: Gambar | Kontrol | Volume */
         align-items: center;
-        gap: 1.5rem;
+        gap: 2rem;
         z-index: 2000;
         box-shadow: 0 -8px 25px var(--shadow-color);
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
     }
     
     .floating-player-container:hover {
         transform: translateY(-2px);
         box-shadow: 0 -12px 35px var(--shadow-color);
-        transition: all 0.3s ease;
     }
     
     .floating-player-container .current-track-info { 
-        display: flex; 
-        align-items: center; 
-        gap: 1rem; 
-        min-width: 0; 
-        margin-right: 3rem;
+        justify-self: start;
     }
+
     .floating-player-container .current-track-info img { 
         width: 60px; 
         height: 60px; 
         border-radius: 0.5rem; 
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        display: block;
     }
+    
+    /* MENGHILANGKAN JUDUL & ARTIS DARI FLOATING PLAYER */
     .floating-player-container .track-details { 
-        overflow: hidden; 
+       display: none;
     }
-    .floating-player-container .track-details p { 
-        white-space: nowrap; 
-        overflow: hidden; 
-        text-overflow: ellipsis; 
+    
+    .player-core {
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        justify-self: center; /* Memastikan kontrol tetap di tengah */
     }
-    .floating-player-container .player-controls { 
+
+    .player-controls { 
         display: flex; 
         justify-content: center; 
         align-items: center; 
         gap: 1rem; 
     }
-    .floating-player-container .player-controls button { 
+    .player-controls button { 
         background: none; 
         border: none; 
         color: var(--text-secondary); 
@@ -198,35 +226,38 @@ body { padding-bottom: 90px; }
         padding: 0.5rem;
         border-radius: 50%;
     }
-    .floating-player-container .player-controls button:hover { 
+    .player-controls button:hover { 
         color: var(--text-primary); 
         background-color: var(--tertiary-bg);
         transform: scale(1.1);
     }
-    .floating-player-container .player-controls #play-pause-button { 
+    .player-controls #play-pause-button { 
         font-size: 2.5rem; 
         color: var(--text-primary); 
         padding: 0.3rem;
     }
-    .floating-player-container .player-controls #play-pause-button:hover {
+    .player-controls #play-pause-button:hover {
         color: var(--accent-primary);
         background-color: transparent;
         transform: scale(1.05);
     }
-    .floating-player-container .progress-volume-controls { 
-        display: flex; 
-        justify-content: flex-end; 
-        align-items: center; 
-        gap: 1rem; 
+
+    .progress-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+        max-width: 400px;
     }
-    .floating-player-container #current-time-display, 
-    .floating-player-container #total-time-display { 
+
+    #current-time-display, #total-time-display { 
         font-size: 0.8rem; 
         color: var(--text-secondary); 
         min-width: 35px;
+        text-align: center;
     }
-    .floating-player-container #progress-bar, 
-    .floating-player-container #volume-bar { 
+    
+    #progress-bar, #volume-bar { 
         -webkit-appearance: none; 
         appearance: none; 
         height: 4px; 
@@ -236,12 +267,11 @@ body { padding-bottom: 90px; }
         background-color: var(--tertiary-bg); 
         transition: background-color 0.2s;
     }
-    .floating-player-container #progress-bar:hover,
-    .floating-player-container #volume-bar:hover {
+    #progress-bar:hover, #volume-bar:hover {
         background-color: var(--border-color);
     }
-    .floating-player-container #progress-bar::-webkit-slider-thumb, 
-    .floating-player-container #volume-bar::-webkit-slider-thumb { 
+    #progress-bar::-webkit-slider-thumb, 
+    #volume-bar::-webkit-slider-thumb { 
         -webkit-appearance: none; 
         appearance: none; 
         width: 14px; 
@@ -251,30 +281,33 @@ body { padding-bottom: 90px; }
         cursor: pointer;
         transition: transform 0.2s;
     }
-    .floating-player-container #progress-bar::-webkit-slider-thumb:hover,
-    .floating-player-container #volume-bar::-webkit-slider-thumb:hover {
+    #progress-bar::-webkit-slider-thumb:hover,
+    #volume-bar::-webkit-slider-thumb:hover {
         transform: scale(1.2);
     }
-    .floating-player-container #volume-bar { 
-        width: 80px; 
-    }
-    .floating-player-container #progress-bar { 
+    
+    #progress-bar { 
         width: 100%; 
     }
     
-    /* Volume control styling */
-    .floating-player-container .volume-control {
+    .volume-container {
+        justify-self: end;
+    }
+    .volume-control {
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
-    .floating-player-container #volume-icon {
+     #volume-bar { 
+        width: 80px; 
+    }
+    #volume-icon {
         color: var(--text-secondary);
         font-size: 1rem;
         cursor: pointer;
         transition: color 0.2s;
     }
-    .floating-player-container #volume-icon:hover {
+    #volume-icon:hover {
         color: var(--text-primary);
     }
 
@@ -284,10 +317,89 @@ body { padding-bottom: 90px; }
         flex-direction: column; 
         gap: 2rem; 
         overflow-y: auto; 
-        padding-bottom: 140px; /* PENTING: Padding bawah untuk tidak tertutup floating player */
+        padding-bottom: 140px;
     }
     .right-sidebar::-webkit-scrollbar { display: none; }
     .right-sidebar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    .now-playing-card { 
+        background-color: var(--secondary-bg); 
+        border-radius: 1rem; 
+        overflow: hidden; 
+        margin-top: auto; 
+        transition: transform 0.2s;
+        position: relative;
+    }
+    .now-playing-card:hover {
+        transform: translateY(-2px);
+    }
+    .now-playing-card img { 
+        width: 100%; 
+        display: block; 
+    }
+
+    #now-playing-youtube-link {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 40px;
+        height: 40px;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 1.2rem;
+        text-decoration: none;
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(0.8);
+        transition: all 0.25s ease-in-out;
+    }
+
+    .now-playing-card:hover #now-playing-youtube-link {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(1);
+    }
+
+    #now-playing-youtube-link:hover {
+        background-color: #FF0000;
+        transform: scale(1.1);
+    }
+
+    .card-content { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        padding: 1rem; 
+    }
+    .card-details h4 { 
+        font-size: 1rem; 
+        color: var(--text-primary); 
+        margin-bottom: 0.2rem;
+    }
+    .card-details p { 
+        font-size: 0.9rem; 
+        color: var(--text-secondary); 
+    }
+    .add-btn { 
+        background-color: var(--tertiary-bg); 
+        color: var(--text-primary); 
+        border: none; 
+        width: 40px; 
+        height: 40px; 
+        border-radius: 50%; 
+        font-size: 1.2rem; 
+        cursor: pointer; 
+        transition: all 0.2s;
+    }
+    .add-btn:hover {
+        background-color: var(--accent-primary);
+        color: white;
+        transform: scale(1.1);
+    }
     .tags-section, .played-section { 
         background-color: var(--secondary-bg); 
         padding: 1.5rem; 
@@ -362,50 +474,5 @@ body { padding-bottom: 90px; }
     }
     .played-time { 
         margin-left: auto; 
-    }
-    .now-playing-card { 
-        background-color: var(--secondary-bg); 
-        border-radius: 1rem; 
-        overflow: hidden; 
-        margin-top: auto; 
-        transition: transform 0.2s;
-    }
-    .now-playing-card:hover {
-        transform: translateY(-2px);
-    }
-    .now-playing-card img { 
-        width: 100%; 
-        display: block; 
-    }
-    .card-content { 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        padding: 1rem; 
-    }
-    .card-details h4 { 
-        font-size: 1rem; 
-        color: var(--text-primary); 
-        margin-bottom: 0.2rem;
-    }
-    .card-details p { 
-        font-size: 0.9rem; 
-        color: var(--text-secondary); 
-    }
-    .add-btn { 
-        background-color: var(--tertiary-bg); 
-        color: var(--text-primary); 
-        border: none; 
-        width: 40px; 
-        height: 40px; 
-        border-radius: 50%; 
-        font-size: 1.2rem; 
-        cursor: pointer; 
-        transition: all 0.2s;
-    }
-    .add-btn:hover {
-        background-color: var(--accent-primary);
-        color: white;
-        transform: scale(1.1);
     }
 }

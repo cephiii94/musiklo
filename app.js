@@ -130,24 +130,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!song) return;
         const title = decodeHtml(song.title);
         const artist = decodeHtml(song.artist);
+        const youtubeUrl = `https://www.youtube.com/watch?v=${song.videoId}`;
 
         // Update player mobile
         currentTrackArtMobile.src = song.thumbnailUrl;
         currentTrackTitleMobile.textContent = title;
         currentTrackArtistMobile.textContent = artist;
         
-        // Update player desktop (jika ada)
+        // Update player desktop
         const artDesktop = document.getElementById('current-track-art');
         const titleDesktop = document.getElementById('current-track-title');
         const artistDesktop = document.getElementById('current-track-artist');
+
         if(artDesktop) artDesktop.src = song.thumbnailUrl;
         if(titleDesktop) titleDesktop.textContent = title;
         if(artistDesktop) artistDesktop.textContent = artist;
 
         // Update sidebar
-        nowPlayingCardArt.src = song.thumbnailUrl;
-        nowPlayingCardTitle.textContent = title;
-        nowPlayingCardArtist.textContent = artist;
+        const nowPlayingCardArt = document.getElementById('now-playing-card-art');
+        const nowPlayingCardTitle = document.getElementById('now-playing-card-title');
+        const nowPlayingCardArtist = document.getElementById('now-playing-card-artist');
+        const nowPlayingYoutubeLink = document.getElementById('now-playing-youtube-link');
+
+        if(nowPlayingCardArt) nowPlayingCardArt.src = song.thumbnailUrl;
+        if(nowPlayingCardTitle) nowPlayingCardTitle.textContent = title;
+        if(nowPlayingCardArtist) nowPlayingCardArtist.textContent = artist;
+        if(nowPlayingYoutubeLink) nowPlayingYoutubeLink.href = youtubeUrl;
+
 
         // Update highlight lagu
         document.querySelectorAll('.song-item-grid.active-song').forEach(item => item.classList.remove('active-song'));
@@ -189,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderFloatingPlayer() {
+        // PERUBAHAN STRUKTUR HTML PLAYER
         const floatingPlayerHTML = `
             <div class="floating-player-container">
                 <div class="current-track-info">
@@ -198,17 +208,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p id="current-track-artist">musiklo</p>
                     </div>
                 </div>
-                <div class="player-controls">
-                    <button id="shuffle-button" title="Acak"><i class="fas fa-random"></i></button>
-                    <button id="prev-button" title="Sebelumnya"><i class="fas fa-step-backward"></i></button>
-                    <button id="play-pause-button" title="Mainkan/Jeda"><i id="play-pause-icon" class="fas fa-play-circle"></i></button>
-                    <button id="next-button" title="Berikutnya"><i class="fas fa-step-forward"></i></button>
-                    <button id="repeat-button" title="Ulangi"><i class="fas fa-redo"></i></button>
+
+                <div class="player-core">
+                    <div class="player-controls">
+                        <button id="shuffle-button" title="Acak"><i class="fas fa-random"></i></button>
+                        <button id="prev-button" title="Sebelumnya"><i class="fas fa-step-backward"></i></button>
+                        <button id="play-pause-button" title="Mainkan/Jeda"><i id="play-pause-icon" class="fas fa-play-circle"></i></button>
+                        <button id="next-button" title="Berikutnya"><i class="fas fa-step-forward"></i></button>
+                        <button id="repeat-button" title="Ulangi"><i class="fas fa-redo"></i></button>
+                    </div>
+                    <div class="progress-container">
+                        <span id="current-time-display">0:00</span>
+                        <input type="range" id="progress-bar" value="0" step="1">
+                        <span id="total-time-display">0:00</span>
+                    </div>
                 </div>
-                <div class="progress-volume-controls">
-                    <span id="current-time-display">0:00</span>
-                    <input type="range" id="progress-bar" value="0" step="1">
-                    <span id="total-time-display">0:00</span>
+                
+                <div class="volume-container">
                     <div class="volume-control">
                         <i class="fas fa-volume-high" id="volume-icon"></i>
                         <input type="range" id="volume-bar" min="0" max="100" value="80">
