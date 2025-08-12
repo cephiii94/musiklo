@@ -14,8 +14,8 @@ html { scroll-behavior: smooth; }
 body { font-family: 'Poppins', sans-serif; background-color: var(--primary-bg); color: var(--text-primary); transition: background-color 0.3s, color 0.3s; }
 
 /* === SKEMA WARNA === */
-body.light-mode { --primary-bg: #f0f8ff; --secondary-bg: #ffffff; --tertiary-bg: #e6f4ff; --accent-primary: var(--soft-blue-dark); --accent-secondary: var(--soft-blue); --text-primary: #1e2a3a; --text-secondary: #5c677d; --shadow-color: rgba(137, 207, 240, 0.3); --border-color: #eee; }
-body.dark-mode { --primary-bg: #1e1b2e; --secondary-bg: #2a2a3a; --tertiary-bg: #4e4e50; --accent-primary: var(--soft-blue-dark); --accent-secondary: var(--soft-blue-light); --text-primary: #ffffff; --text-secondary: #a0a0b4; --shadow-color: rgba(0, 0, 0, 0.2); --border-color: #4e4e50; }
+body.light-mode { --primary-bg: #f0f8ff; --secondary-bg: #ffffff; --tertiary-bg: #e6f4ff; --accent-primary: var(--soft-blue-dark); --accent-secondary: var(--soft-blue); --text-primary: #1e2a3a; --text-secondary: #5c677d; --shadow-color: rgba(137, 207, 240, 0.3); --border-color: #eee; --player-bg: rgba(255, 255, 255, 0.7); }
+body.dark-mode { --primary-bg: #1e1b2e; --secondary-bg: #2a2a3a; --tertiary-bg: #4e4e50; --accent-primary: var(--soft-blue-dark); --accent-secondary: var(--soft-blue-light); --text-primary: #ffffff; --text-secondary: #a0a0b4; --shadow-color: rgba(0, 0, 0, 0.2); --border-color: #4e4e50; --player-bg: rgba(42, 42, 58, 0.7); }
 
 .hidden { display: none !important; }
 .loader { border: 5px solid var(--tertiary-bg); border-top: 5px solid var(--accent-primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 3rem auto; }
@@ -28,27 +28,13 @@ body.dark-mode { --primary-bg: #1e1b2e; --secondary-bg: #2a2a3a; --tertiary-bg: 
 /* ======================================= */
 /* === TAMPILAN MOBILE & TABLET (<1024px) === */
 /* ======================================= */
-/* PENYESUAIAN: Padding bawah ditambah untuk mengakomodasi navbar dan player */
 body { padding-bottom: 160px; } 
 
 .main-content-mobile { padding: 1rem; padding-bottom: 4rem; }
 .playlist-section-mobile { margin-bottom: 2rem; }
-
-.playlist-header-mobile {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    position: sticky;
-    top: 58px; 
-    background-color: var(--primary-bg);
-    z-index: 900;
-    padding: 0.5rem 0;
-}
+.playlist-header-mobile { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; position: sticky; top: 58px; background-color: var(--primary-bg); z-index: 900; padding: 0.5rem 0; }
 .playlist-header-mobile h2 { margin-bottom: 0; color: var(--text-primary); }
-
 .song-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; }
-
 .song-item-grid { background-color: var(--secondary-bg); padding: 0.8rem; border-radius: 8px; box-shadow: 0 4px 15px var(--shadow-color); text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
 .song-item-grid:hover { transform: translateY(-5px); }
 .song-item-grid.active-song { background-color: var(--accent-primary); color: white; }
@@ -56,25 +42,8 @@ body { padding-bottom: 160px; }
 .song-item-grid img { width: 100%; border-radius: 6px; aspect-ratio: 1 / 1; object-fit: cover; }
 .song-item-grid .title { font-weight: 500; margin-top: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; }
 .song-item-grid .artist { font-size: 0.8rem; color: var(--text-secondary); }
-
-.show-all-container { /* Dikosongkan */ }
-
-.show-all-button, .hide-button {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 8px;
-    transition: color 0.2s, background-color 0.2s;
-}
-.show-all-button:hover, .hide-button:hover {
-    color: var(--accent-primary);
-    background-color: var(--tertiary-bg);
-}
-
+.show-all-button, .hide-button { background: none; border: none; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: color 0.2s, background-color 0.2s; }
+.show-all-button:hover, .hide-button:hover { color: var(--accent-primary); background-color: var(--tertiary-bg); }
 .desktop-container { display: none; }
 .main-header-mobile { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; background-color: var(--secondary-bg); box-shadow: 0 2px 10px var(--shadow-color); position: sticky; top: 0; z-index: 1000; }
 .main-header-mobile .logo h1 { color: var(--accent-primary); font-weight: 700; font-size: 1.5rem; }
@@ -86,77 +55,156 @@ body { padding-bottom: 160px; }
 .main-header-mobile .search-bar button { padding: 0.5rem 1rem; border: none; background-color: var(--accent-secondary); color: white; border-radius: 0 20px 20px 0; cursor: pointer; }
 
 /* Style untuk Navbar Mobile */
-.mobile-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 65px;
-    background-color: var(--secondary-bg);
-    box-shadow: 0 -2px 15px var(--shadow-color);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1100;
-}
-.mobile-nav ul {
-    list-style: none;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-}
-.mobile-nav li a {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    color: var(--text-secondary);
-    padding: 0.5rem 1rem;
-    font-size: 0.7rem;
-    transition: color 0.2s;
-}
-.mobile-nav li a i {
-    font-size: 1.3rem;
-    margin-bottom: 4px;
-}
-.mobile-nav li.active a {
-    color: var(--accent-primary);
-}
+.mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background-color: var(--secondary-bg); box-shadow: 0 -2px 15px var(--shadow-color); display: flex; justify-content: center; align-items: center; z-index: 1100; }
+.mobile-nav ul { list-style: none; display: flex; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
+.mobile-nav li a { display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; color: var(--text-secondary); padding: 0.5rem 1rem; font-size: 0.7rem; transition: color 0.2s; }
+.mobile-nav li a i { font-size: 1.3rem; margin-bottom: 4px; }
+.mobile-nav li.active a { color: var(--accent-primary); }
 
-/* Player Mobile Floating, posisinya di atas navbar */
+/* === PERBAIKAN TOTAL: Player Mobile Floating === */
 .player-container-mobile {
     position: fixed;
-    bottom: calc(65px + 1rem); /* 65px tinggi navbar + 1rem jarak */
+    bottom: calc(65px + 0.5rem);
     left: 50%;
     transform: translateX(-50%);
-    width: calc(100% - 2rem);
+    width: calc(100% - 1rem);
     max-width: 500px;
-    height: 70px;
+    height: 120px;
     z-index: 1500;
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: var(--player-bg);
     border: 1px solid var(--border-color);
-    border-radius: 1rem;
+    border-radius: 20px; /* Setengah dari tinggi untuk bentuk pil */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    display: flex;
+    display: grid;
+    grid-template-columns: 90px 1fr 60px; /* Kolom: thumbnail, info, volume */
     align-items: center;
-    justify-content: space-between;
-    padding: 0 1rem;
+    padding: 0 5px;
+    gap: 10px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
-body.dark-mode .player-container-mobile { background-color: rgba(42, 42, 58, 0.7); }
-.player-container-mobile .current-track-info { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
-.player-container-mobile .current-track-info img { width: 50px; height: 50px; border-radius: 0.5rem; flex-shrink: 0; }
-.player-container-mobile .track-details { overflow: hidden; }
-.player-container-mobile .track-details p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.player-container-mobile .track-details #current-track-title-mobile { font-weight: 600; color: var(--text-primary); }
-.player-container-mobile .track-details #current-track-artist-mobile { font-size: 0.8rem; color: var(--text-secondary); }
-.player-container-mobile .player-controls-mobile { display: flex; align-items: center; gap: 0.5rem; }
-.player-container-mobile .player-controls-mobile button { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary); }
-.player-container-mobile .player-controls-mobile #play-pause-button-mobile { font-size: 2.2rem; color: var(--text-primary); }
+
+.player-art-mobile {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    justify-self: center; /* Memastikan gambar di tengah kolomnya */
+}
+
+.player-info-mobile {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around; /* Memberi jarak merata */
+    min-width: 0;
+    height: 100%;
+    padding: 8px 0; /* Padding vertikal */
+}
+
+.track-details-mobile {
+    overflow: hidden;
+    white-space: nowrap;
+    text-align: center;
+}
+
+#current-track-title-mobile {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+#current-track-artist-mobile {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.player-controls-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.player-controls-mobile button {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 0;
+}
+
+.player-controls-mobile #play-pause-button-mobile {
+    font-size: 2.2rem;
+    color: var(--text-primary);
+}
+
+/* Progress Bar Linear di Kolom Tengah */
+.progress-bar-container-mobile {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.progress-bar-container-mobile span {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+#progress-bar-mobile {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--tertiary-bg);
+    outline: none;
+    cursor: pointer;
+}
+
+#progress-bar-mobile::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+}
+
+#progress-bar-mobile::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    border: none;
+}
+
+/* Volume Control di Kolom Kanan */
+.volume-container-mobile {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: center; /* Memastikan di tengah kolomnya */
+    cursor: pointer;
+}
+
+
+
+#volume-icon-mobile {
+    position: absolute;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
 
 /* ======================================= */
 /* === TAMPILAN DESKTOP (>= 1024px) === */
@@ -166,7 +214,7 @@ body.dark-mode .player-container-mobile { background-color: rgba(42, 42, 58, 0.7
     .main-header-mobile, .main-content-mobile, .player-container-mobile, .mobile-nav { display: none; }
     .desktop-container { display: grid; grid-template-columns: 280px 1fr 320px; height: calc(100vh - 120px); gap: 2rem; padding: 1.5rem; padding-bottom: 140px; }
     .song-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1.5rem; }
-
+    
     /* Sidebar Kiri */
     .left-sidebar { background-color: var(--secondary-bg); border-radius: 1rem; padding: 1.5rem; display: flex; flex-direction: column; }
     .logo-desktop h1 { font-size: 1.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 2rem; }
