@@ -28,7 +28,7 @@ body.dark-mode { --primary-bg: #1e1b2e; --secondary-bg: #2a2a3a; --tertiary-bg: 
 /* ======================================= */
 /* === TAMPILAN MOBILE & TABLET (<1024px) === */
 /* ======================================= */
-body { padding-bottom: 160px; } 
+body { padding-bottom: 180px; } /* Tambah padding agar player tidak menutupi konten */
 
 .main-content-mobile { padding: 1rem; padding-bottom: 4rem; }
 .playlist-section-mobile { margin-bottom: 2rem; }
@@ -69,15 +69,15 @@ body { padding-bottom: 160px; }
     transform: translateX(-50%);
     width: calc(100% - 1rem);
     max-width: 500px;
-    height: 120px;
+    height: 100px;
     z-index: 1500;
     background-color: var(--player-bg);
     border: 1px solid var(--border-color);
-    border-radius: 20px; /* Setengah dari tinggi untuk bentuk pil */
+    border-radius: 50px; /* Setengah dari tinggi untuk bentuk pil */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     display: grid;
-    grid-template-columns: 90px 1fr 60px; /* Kolom: thumbnail, info, volume */
+    grid-template-columns: 90px 1fr 60px; /* Kolom: thumbnail, info, options */
     align-items: center;
     padding: 0 5px;
     gap: 10px;
@@ -87,7 +87,7 @@ body { padding-bottom: 160px; }
 .player-art-mobile {
     width: 80px;
     height: 80px;
-    border-radius: 20px;
+    border-radius: 50%;
     object-fit: cover;
     justify-self: center; /* Memastikan gambar di tengah kolomnya */
 }
@@ -299,10 +299,45 @@ body { padding-bottom: 160px; }
     #now-playing-youtube-link { position: absolute; top: 1rem; right: 1rem; width: 40px; height: 40px; background-color: rgba(0, 0, 0, 0.6); color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; text-decoration: none; opacity: 0; visibility: hidden; transform: scale(0.8); transition: all 0.25s ease-in-out; }
     .now-playing-card:hover #now-playing-youtube-link { opacity: 1; visibility: visible; transform: scale(1); }
     #now-playing-youtube-link:hover { background-color: #FF0000; transform: scale(1.1); }
-    .card-content { display: flex; justify-content: space-between; align-items: center; padding: 1rem; }
-    .card-details h4 { font-size: 1rem; color: var(--text-primary); margin-bottom: 0.2rem; }
+
+    .card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    height: auto; /* Memastikan tinggi fleksibel */
+    min-height: 80px; /* Memberi tinggi minimal agar tidak terlalu gepeng */
+    }
+
+    /* PERBAIKAN: Agar judul bisa wrap */
+    .card-details {
+        flex: 1; /* Memastikan elemen ini mengambil sisa ruang */
+        min-width: 0; /* Mencegah elemen mendorong tombol */
+    }
+    .card-details h4 {
+        font-size: 1rem;
+        color: var(--text-primary);
+        margin-bottom: 0.2rem;
+        white-space: normal; /* Mengizinkan teks untuk wrap */
+        word-break: break-word; /* Memecah kata jika perlu */
+    }
     .card-details p { font-size: 0.9rem; color: var(--text-secondary); }
-    .add-btn { background-color: var(--tertiary-bg); color: var(--text-primary); border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; }
+    
+.add-btn { 
+    background-color: var(--tertiary-bg); 
+    color: var(--text-primary); 
+    border: none; 
+    width: 40px; 
+    height: 40px; 
+    border-radius: 50%; 
+    font-size: 1.2rem; 
+    cursor: pointer; 
+    transition: all 0.2s; 
+    flex-shrink: 0; /* Mencegah tombol menyusut */ 
+    margin-left: 1rem; 
+    align-self: center; /* DITAMBAHKAN: Agar tombol selalu di tengah secara vertikal */
+}
+
     .add-btn:hover { background-color: var(--accent-primary); color: white; transform: scale(1.1); }
     .tags-section, .played-section { background-color: var(--secondary-bg); padding: 1.5rem; border-radius: 1rem; }
     .tags-section h3, .played-section h3 { margin-bottom: 1rem; color: var(--text-primary); }
