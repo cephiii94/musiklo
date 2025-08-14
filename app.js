@@ -52,6 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isShuffle = false;
     let repeatMode = 'none'; // 'none', 'all', 'one'
     let playAfterLoad = false; // PERBAIKAN: Bendera untuk menandai pemutaran otomatis
+    let playerReady = false; // Track player readiness
+    let userHasInteracted = false; // Track user interaction for Safari/iOS
 
     // === 3. LOGIKA TEMA (DARK/LIGHT MODE) ===
     const applyTheme = (theme) => {
@@ -81,40 +83,169 @@ document.addEventListener('DOMContentLoaded', () => {
         else applyTheme('light-mode');
     };
 
-    // === 4. INISIALISASI YOUTUBE PLAYER ===
+    // === 4. SAFARI/IOS COMPATIBILITY FIXES ===
+    // Deteksi Safari/iOS
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Fungsi untuk menangani user interaction pertama
+    function handleFirstUserInteraction() {
+        if (!userHasInteracted) {
+            userHasInteracted = true;
+            console.log('First user interaction detected');
+            
+            // Untuk Safari/iOS, kita perlu memulai player dengan volume 0 terlebih dahulu
+            if ((isSafari || isIOS) && player && playerReady) {
+                try {
+                    player.setVolume(0);
+                    player.mute();
+                } catch (e) {
+                    console.log('Could not mute player:', e);
+                }
+            }
+        }
+    }
+
+    // Event listeners untuk deteksi interaksi pertama
+    ['click', 'touchstart', 'keydown'].forEach(event => {
+        document.addEventListener(event, handleFirstUserInteraction, { once: true, passive: true });
+    });
+
+    // === 5. INISIALISASI YOUTUBE PLAYER ===
     window.onYouTubeIframeAPIReady = function() {
         player = new YT.Player('youtube-player', {
-            height: '0', width: '0',
-            events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
+            height: '0', 
+            width: '0',
+            playerVars: {
+                'autoplay': 0, // Selalu 0 untuk Safari/iOS
+                'controls': 0,
+                'disablekb': 1,
+                'enablejsapi': 1,
+                'fs': 0,
+                'iv_load_policy': 3,
+                'modestbranding': 1,
+                'playsinline': 1, // Penting untuk iOS
+                'rel': 0,
+                'showinfo': 0
+            },
+            events: { 
+                'onReady': onPlayerReady, 
+                'onStateChange': onPlayerStateChange,
+                'onError': onPlayerError
+            }
         });
     };
+
     function onPlayerReady(event) {
+        playerReady = true;
         player.setVolume(80);
+        
+        // Untuk Safari/iOS, set volume ke 0 jika belum ada interaksi
+        if ((isSafari || isIOS) && !userHasInteracted) {
+            player.setVolume(0);
+            player.mute();
+        }
+        
         loadInitialData();
+        console.log('YouTube Player ready');
     }
+
     function onPlayerStateChange(event) {
+        const oldIsPlaying = isPlaying;
         isPlaying = (event.data === YT.PlayerState.PLAYING);
-        if (isPlaying) startProgressUpdater();
-        else clearInterval(progressInterval);
+        
+        if (isPlaying) {
+            startProgressUpdater();
+            // Unmute dan set volume normal setelah mulai playing (untuk Safari/iOS)
+            if ((isSafari || isIOS) && userHasInteracted) {
+                setTimeout(() => {
+                    try {
+                        player.unMute();
+                        player.setVolume(80);
+                    } catch (e) {
+                        console.log('Could not unmute player:', e);
+                    }
+                }, 100);
+            }
+        } else {
+            clearInterval(progressInterval);
+        }
+        
         updatePlayPauseIcons();
 
-        // PERBAIKAN: Logika baru untuk memutar lagu setelah siap
+        // PERBAIKAN: Logika baru untuk Safari/iOS
         if (event.data === YT.PlayerState.CUED && playAfterLoad) {
-            player.playVideo();
-            playAfterLoad = false; // Reset bendera setelah digunakan
+            if (userHasInteracted) {
+                // Untuk Safari/iOS, tambahkan delay kecil
+                if (isSafari || isIOS) {
+                    setTimeout(() => {
+                        try {
+                            player.playVideo();
+                        } catch (e) {
+                            console.log('Could not play video:', e);
+                            // Fallback: coba lagi setelah delay
+                            setTimeout(() => {
+                                try {
+                                    player.playVideo();
+                                } catch (e2) {
+                                    console.log('Second attempt failed:', e2);
+                                }
+                            }, 500);
+                        }
+                    }, 200);
+                } else {
+                    player.playVideo();
+                }
+            } else {
+                console.log('Cannot autoplay - no user interaction yet');
+            }
+            playAfterLoad = false;
         }
         
         if (event.data === YT.PlayerState.ENDED) {
             if (repeatMode === 'one') {
                 player.seekTo(0);
-                player.playVideo();
+                if (userHasInteracted) {
+                    player.playVideo();
+                }
             } else {
                 playNext();
             }
         }
+
+        // Handle buffering states untuk Safari/iOS
+        if (event.data === YT.PlayerState.BUFFERING && (isSafari || isIOS)) {
+            console.log('Buffering on Safari/iOS');
+        }
     }
 
-    // === 5. FUNGSI-FUNGSI UI & SINKRONISASI ===
+    function onPlayerError(event) {
+        console.error('YouTube Player Error:', event.data);
+        // Handle different error codes
+        switch(event.data) {
+            case 2:
+                console.error('Invalid video ID');
+                break;
+            case 5:
+                console.error('HTML5 player error');
+                break;
+            case 100:
+                console.error('Video not found');
+                break;
+            case 101:
+            case 150:
+                console.error('Video not allowed in embedded players');
+                break;
+        }
+        
+        // Automatically skip to next song on error
+        setTimeout(() => {
+            playNext();
+        }, 2000);
+    }
+
+    // === 6. FUNGSI-FUNGSI UI & SINKRONISASI ===
     const decodeHtml = (html) => { const txt = document.createElement("textarea"); txt.innerHTML = html; return txt.value; };
     const formatTime = (seconds) => { const min = Math.floor(seconds / 60); const sec = Math.floor(seconds % 60).toString().padStart(2, '0'); return `${min}:${sec}`; };
     
@@ -131,20 +262,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateProgress() {
         if (!player || typeof player.getDuration !== 'function' || !isPlaying) return;
-        const duration = player.getDuration();
-        const currentTime = player.getCurrentTime();
-        const progressPercent = (duration > 0) ? (currentTime / duration) * 100 : 0;
         
-        const progressBarDesktop = document.getElementById('progress-bar');
-        const currentTimeDesktop = document.getElementById('current-time-display');
-        const totalTimeDesktop = document.getElementById('total-time-display');
-        if(progressBarDesktop) progressBarDesktop.value = progressPercent;
-        if(currentTimeDesktop) currentTimeDesktop.textContent = formatTime(currentTime);
-        if(totalTimeDesktop) totalTimeDesktop.textContent = formatTime(duration);
+        try {
+            const duration = player.getDuration();
+            const currentTime = player.getCurrentTime();
+            const progressPercent = (duration > 0) ? (currentTime / duration) * 100 : 0;
+            
+            const progressBarDesktop = document.getElementById('progress-bar');
+            const currentTimeDesktop = document.getElementById('current-time-display');
+            const totalTimeDesktop = document.getElementById('total-time-display');
+            if(progressBarDesktop) progressBarDesktop.value = progressPercent;
+            if(currentTimeDesktop) currentTimeDesktop.textContent = formatTime(currentTime);
+            if(totalTimeDesktop) totalTimeDesktop.textContent = formatTime(duration);
 
-        if(progressBarMobile) progressBarMobile.value = progressPercent;
-        if(currentTimeMobileDisplay) currentTimeMobileDisplay.textContent = formatTime(currentTime);
-        if(totalTimeMobileDisplay) totalTimeMobileDisplay.textContent = formatTime(duration);
+            if(progressBarMobile) progressBarMobile.value = progressPercent;
+            if(currentTimeMobileDisplay) currentTimeMobileDisplay.textContent = formatTime(currentTime);
+            if(totalTimeMobileDisplay) totalTimeMobileDisplay.textContent = formatTime(duration);
+        } catch (e) {
+            console.log('Error updating progress:', e);
+        }
     }
 
     function cleanSongTitle(title) {
@@ -152,6 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cleanedTitle = cleanedTitle.replace(/official music video/i, '').replace(/official video/i, '').replace(/music video/i, '').replace(/official/i, '').replace(/lyric video/i, '').replace(/lyrics/i, '');
         return cleanedTitle.trim();
     }
+
     async function displayLyrics(artist, title) {
         if (!lyricsText) return;
         const cleanedTitle = cleanSongTitle(title);
@@ -167,35 +304,42 @@ document.addEventListener('DOMContentLoaded', () => {
             lyricsText.textContent = 'Maaf, lirik untuk lagu ini tidak dapat dimuat.';
         }
     }
+
     function updatePlayerUI(song) {
         if (!song) return;
         const title = decodeHtml(song.title);
         const artist = decodeHtml(song.artist);
         const youtubeUrl = `https://www.youtube.com/watch?v=${song.videoId}`;
-        currentTrackArtMobile.src = song.thumbnailUrl;
-        currentTrackTitleMobile.textContent = title;
-        currentTrackArtistMobile.textContent = artist;
+        
+        if (currentTrackArtMobile) currentTrackArtMobile.src = song.thumbnailUrl;
+        if (currentTrackTitleMobile) currentTrackTitleMobile.textContent = title;
+        if (currentTrackArtistMobile) currentTrackArtistMobile.textContent = artist;
+        
         const artDesktop = document.getElementById('current-track-art');
         const titleDesktop = document.getElementById('current-track-title');
         const artistDesktop = document.getElementById('current-track-artist');
         if(artDesktop) artDesktop.src = song.thumbnailUrl;
         if(titleDesktop) titleDesktop.textContent = title;
         if(artistDesktop) artistDesktop.textContent = artist;
+        
         const nowPlayingYoutubeLink = document.getElementById('now-playing-youtube-link');
         if(nowPlayingCardArt) nowPlayingCardArt.src = song.thumbnailUrl;
         if(nowPlayingCardTitle) nowPlayingCardTitle.textContent = title;
         if(nowPlayingCardArtist) nowPlayingCardArtist.textContent = artist;
         if(nowPlayingYoutubeLink) nowPlayingYoutubeLink.href = youtubeUrl;
+        
         displayLyrics(artist, title);
+        
         document.querySelectorAll('.song-item-grid.active-song').forEach(item => item.classList.remove('active-song'));
         document.querySelectorAll(`[data-video-id='${song.videoId}']`).forEach(el => el.classList.add('active-song'));
     }
+
     function startProgressUpdater() {
         clearInterval(progressInterval);
         progressInterval = setInterval(updateProgress, 1000);
     }
 
-    // === 6. FUNGSI RENDER KONTEN & PLAYER ===
+    // === 7. FUNGSI RENDER KONTEN & PLAYER ===
     function renderHomePage() {
         mainContent.innerHTML = `
             <div id="main-content-scroll-area">
@@ -233,6 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTopCharts(topChartsPlaylist);
         renderKoleksi(koleksiPlaylist);
     }
+
     function renderFloatingPlayer() {
         const floatingPlayerHTML = `
             <div class="floating-player-container">
@@ -267,6 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContent.insertAdjacentHTML('beforeend', floatingPlayerHTML);
         addDesktopPlayerListeners();
     }
+
     function renderGrid(playlist, playlistName, limit = -1) {
         let gridHTML = '';
         const itemsToRender = limit === -1 ? playlist : playlist.slice(0, limit);
@@ -277,6 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         return gridHTML;
     }
+
     function renderTopCharts(playlist) {
         const containerDesktop = document.getElementById('top-charts-container-desktop');
         const containerMobile = document.getElementById('top-charts-container-mobile');
@@ -292,6 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(controlsMobile) controlsMobile.innerHTML = controlsHTML;
         }
     }
+
     function renderKoleksi(playlist) {
         const containerDesktop = document.getElementById('koleksi-container-desktop');
         const containerMobile = document.getElementById('koleksi-container-mobile');
@@ -300,6 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
         containerDesktop.innerHTML = gridHTML;
         containerMobile.innerHTML = gridHTML;
     }
+
     function renderSearchResults(playlist, query) {
         const gridHTML = renderGrid(playlist, 'search');
         mainContent.innerHTML = `<div id="main-content-scroll-area"><section class="playlist-section-desktop"><div class="playlist-header"><h2>Hasil untuk "${query}"</h2></div><div class="song-grid">${gridHTML}</div></section></div>`;
@@ -307,8 +456,11 @@ document.addEventListener('DOMContentLoaded', () => {
         renderFloatingPlayer();
     }
 
-    // === 7. LOGIKA PEMUTARAN LAGU ===
+    // === 8. LOGIKA PEMUTARAN LAGU (DIPERBAIKI UNTUK SAFARI/IOS) ===
     function playSong(index, playlistSource) {
+        // Pastikan user sudah berinteraksi terlebih dahulu
+        handleFirstUserInteraction();
+        
         if (activePlaylistSource !== playlistSource) {
             activePlaylistSource = playlistSource;
             if (playlistSource === 'topcharts') originalPlaylist = [...topChartsPlaylist];
@@ -325,15 +477,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (index >= 0 && index < currentPlaylist.length) {
             currentIndex = index;
             const song = currentPlaylist[currentIndex];
-            if (player && typeof player.loadVideoById === 'function') {
-                // PERBAIKAN: Set bendera lalu muat video. Pemutaran akan ditangani oleh onPlayerStateChange
-                playAfterLoad = true;
-                player.loadVideoById(song.videoId);
-                
-                updatePlayerUI(song);
-                if (playerContainerMobile.classList.contains('hidden')) {
-                    playerContainerMobile.classList.remove('hidden');
+            
+            if (player && typeof player.loadVideoById === 'function' && playerReady) {
+                try {
+                    // Untuk Safari/iOS, pastikan user sudah berinteraksi
+                    if (userHasInteracted) {
+                        playAfterLoad = true;
+                        player.loadVideoById(song.videoId);
+                    } else {
+                        // Jika belum ada interaksi, hanya load tanpa autoplay
+                        player.cueVideoById(song.videoId);
+                        console.log('Video cued, waiting for user interaction to play');
+                    }
+                    
+                    updatePlayerUI(song);
+                    
+                    if (playerContainerMobile && playerContainerMobile.classList.contains('hidden')) {
+                        playerContainerMobile.classList.remove('hidden');
+                    }
+                } catch (e) {
+                    console.error('Error loading video:', e);
                 }
+            } else {
+                console.log('Player not ready yet');
             }
         }
     }
@@ -348,14 +514,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         playSong(nextIndex, activePlaylistSource);
     };
+
     const playPrev = () => {
         if (currentPlaylist.length === 0) return;
         const prevIndex = (currentIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
         playSong(prevIndex, activePlaylistSource);
     };
-    const togglePlayPause = () => { if (!player || typeof player.playVideo !== 'function' || currentIndex === -1) return; isPlaying ? player.pauseVideo() : player.playVideo(); };
 
-    // === 8. FUNGSI PENCARIAN & MEMUAT DATA ===
+    const togglePlayPause = () => { 
+        handleFirstUserInteraction();
+        
+        if (!player || typeof player.playVideo !== 'function' || currentIndex === -1) return; 
+        
+        try {
+            if (isPlaying) {
+                player.pauseVideo();
+            } else {
+                // Untuk Safari/iOS, pastikan unmute sebelum play
+                if ((isSafari || isIOS) && userHasInteracted) {
+                    player.unMute();
+                    player.setVolume(80);
+                }
+                player.playVideo();
+            }
+        } catch (e) {
+            console.error('Error toggling play/pause:', e);
+        }
+    };
+
+    // === 9. FUNGSI PENCARIAN & MEMUAT DATA ===
     async function handleSearch(query) {
         if (!query) return;
         mainContent.innerHTML = '<div class="loader"></div>';
@@ -372,6 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mainContentMobile.innerHTML = '<p>Terjadi kesalahan saat mencari.</p>';
         }
     }
+
     async function loadInitialData() {
         mainContent.innerHTML = '<div class="loader"></div>';
         mainContentMobile.innerHTML = '<div class="loader"></div>';
@@ -387,9 +575,14 @@ document.addEventListener('DOMContentLoaded', () => {
             mainContent.innerHTML = '<p>Gagal memuat data. Coba refresh halaman.</p>';
         }
     }
-    const returnToHome = () => { searchInputDesktop.value = ''; searchInputMobile.value = ''; loadInitialData(); };
 
-    // === 9. EVENT LISTENERS ===
+    const returnToHome = () => { 
+        if (searchInputDesktop) searchInputDesktop.value = ''; 
+        if (searchInputMobile) searchInputMobile.value = ''; 
+        loadInitialData(); 
+    };
+
+    // === 10. EVENT LISTENERS ===
     function addDesktopPlayerListeners() {
         const shuffleButton = document.getElementById('shuffle-button');
         const repeatButton = document.getElementById('repeat-button');
@@ -402,13 +595,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('progress-bar')?.addEventListener('input', (e) => {
             if(currentIndex !== -1 && player && typeof player.seekTo === 'function') {
-                player.seekTo(player.getDuration() * (e.target.value / 100));
+                try {
+                    player.seekTo(player.getDuration() * (e.target.value / 100));
+                } catch (err) {
+                    console.log('Error seeking:', err);
+                }
             }
         });
     }
 
-    themeToggleButtonMobile.addEventListener('click', toggleTheme);
-    themeToggleButtonDesktop.addEventListener('click', toggleTheme);
+    // Theme toggle listeners
+    if (themeToggleButtonMobile) themeToggleButtonMobile.addEventListener('click', toggleTheme);
+    if (themeToggleButtonDesktop) themeToggleButtonDesktop.addEventListener('click', toggleTheme);
     
     document.body.addEventListener('click', (event) => {
         const songItem = event.target.closest('.song-item-grid');
@@ -418,6 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
             playSong(index, playlistSource);
             return;
         }
+        
         const showButton = event.target.closest('.show-all-button');
         const hideButton = event.target.closest('.hide-button');
         if (showButton || hideButton) {
@@ -443,43 +642,90 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Lyrics section toggle
     if (lyricsHeader && lyricsSection) {
         lyricsHeader.addEventListener('click', () => {
             lyricsSection.classList.toggle('active');
         });
     }
 
-    playPauseButtonMobile.addEventListener('click', togglePlayPause);
-    nextButtonMobile.addEventListener('click', playNext);
-    prevButtonMobile.addEventListener('click', playPrev);
-    progressBarMobile?.addEventListener('input', (e) => {
-        if(currentIndex !== -1 && player && typeof player.seekTo === 'function') {
-            player.seekTo(player.getDuration() * (e.target.value / 100));
-        }
-    });
-
-    // FUNGSI SHUFFLE & REPEAT UNTUK MOBILE
-    shuffleButtonMobile?.addEventListener('click', toggleShuffle);
-    repeatButtonMobile?.addEventListener('click', toggleRepeat);
+    // Mobile player controls
+    if (playPauseButtonMobile) playPauseButtonMobile.addEventListener('click', togglePlayPause);
+    if (nextButtonMobile) nextButtonMobile.addEventListener('click', playNext);
+    if (prevButtonMobile) prevButtonMobile.addEventListener('click', playPrev);
     
-    const performSearch = (e) => { if (e.key === 'Enter') handleSearch(e.target.value.trim()); };
-    searchInputDesktop.addEventListener('keyup', performSearch);
-    searchInputMobile.addEventListener('keyup', performSearch);
-    searchButtonMobile.addEventListener('click', () => handleSearch(searchInputMobile.value.trim()));
-    logoLinkDesktop.addEventListener('click', (e) => { e.preventDefault(); returnToHome(); });
-    logoLinkMobile.addEventListener('click', (e) => { e.preventDefault(); returnToHome(); });
+    if (progressBarMobile) {
+        progressBarMobile.addEventListener('input', (e) => {
+            if(currentIndex !== -1 && player && typeof player.seekTo === 'function') {
+                try {
+                    player.seekTo(player.getDuration() * (e.target.value / 100));
+                } catch (err) {
+                    console.log('Error seeking on mobile:', err);
+                }
+            }
+        });
+    }
 
+    // Mobile shuffle & repeat buttons
+    if (shuffleButtonMobile) shuffleButtonMobile.addEventListener('click', toggleShuffle);
+    if (repeatButtonMobile) repeatButtonMobile.addEventListener('click', toggleRepeat);
+    
+    // Search functionality
+    const performSearch = (e) => { 
+        if (e.key === 'Enter') {
+            handleFirstUserInteraction(); // Track user interaction
+            handleSearch(e.target.value.trim()); 
+        }
+    };
+    
+    if (searchInputDesktop) searchInputDesktop.addEventListener('keyup', performSearch);
+    if (searchInputMobile) searchInputMobile.addEventListener('keyup', performSearch);
+    if (searchButtonMobile) {
+        searchButtonMobile.addEventListener('click', () => {
+            handleFirstUserInteraction();
+            handleSearch(searchInputMobile.value.trim());
+        });
+    }
+    
+    // Logo navigation
+    if (logoLinkDesktop) {
+        logoLinkDesktop.addEventListener('click', (e) => { 
+            e.preventDefault(); 
+            returnToHome(); 
+        });
+    }
+    if (logoLinkMobile) {
+        logoLinkMobile.addEventListener('click', (e) => { 
+            e.preventDefault(); 
+            returnToHome(); 
+        });
+    }
+
+    // Mobile navigation
     function handleMobileNav(e) {
         e.preventDefault();
+        handleFirstUserInteraction(); // Track user interaction
+        
         const target = e.target.closest('li');
         if (!target) return;
         const page = target.dataset.page;
         if (!page) return;
-        mobileNav.querySelectorAll('li').forEach(item => item.classList.remove('active'));
-        target.classList.add('active');
+        
+        if (mobileNav) {
+            mobileNav.querySelectorAll('li').forEach(item => item.classList.remove('active'));
+            target.classList.add('active');
+        }
+        
         switch (page) {
-            case 'home': returnToHome(); break;
-            case 'search': searchInputMobile.focus(); window.scrollTo({ top: 0, behavior: 'smooth' }); break;
+            case 'home': 
+                returnToHome(); 
+                break;
+            case 'search': 
+                if (searchInputMobile) {
+                    searchInputMobile.focus(); 
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                }
+                break;
             case 'library':
                 mainContent.innerHTML = '';
                 mainContentMobile.innerHTML = `<section class="playlist-section-mobile"><div class="playlist-header-mobile"><h2>Koleksi Lokal</h2></div><div id="koleksi-container-mobile" class="song-grid"></div></section>`;
@@ -496,9 +742,11 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileNav.addEventListener('click', handleMobileNav);
     }
 
-    // === 10. FUNGSI LOGIKA PLAYER TAMBAHAN ===
+    // === 11. FUNGSI LOGIKA PLAYER TAMBAHAN ===
     function toggleShuffle() {
+        handleFirstUserInteraction();
         isShuffle = !isShuffle;
+        
         if (currentIndex === -1) return; // Jangan lakukan apa-apa jika tidak ada lagu yang diputar
         const currentSong = currentPlaylist[currentIndex];
 
@@ -515,6 +763,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggleRepeat() {
+        handleFirstUserInteraction();
+        
         if (repeatMode === 'none') repeatMode = 'all';
         else if (repeatMode === 'all') repeatMode = 'one';
         else repeatMode = 'none';
@@ -535,22 +785,132 @@ document.addEventListener('DOMContentLoaded', () => {
         repeatButtons.forEach(btn => {
             if (btn) {
                 const icon = btn.querySelector('i');
-                btn.classList.remove('active', 'repeat-one');
-                icon.classList.remove('fa-redo', 'fa-1');
+                if (icon) {
+                    btn.classList.remove('active', 'repeat-one');
+                    icon.classList.remove('fa-redo', 'fa-1');
 
-                if (repeatMode === 'all') {
-                    btn.classList.add('active');
-                    icon.classList.add('fa-redo');
-                } else if (repeatMode === 'one') {
-                    btn.classList.add('active', 'repeat-one');
-                    icon.classList.add('fa-1'); // Menggunakan ikon angka 1 dari Font Awesome
-                } else {
-                    icon.classList.add('fa-redo');
+                    if (repeatMode === 'all') {
+                        btn.classList.add('active');
+                        icon.classList.add('fa-redo');
+                    } else if (repeatMode === 'one') {
+                        btn.classList.add('active', 'repeat-one');
+                        icon.classList.add('fa-1'); // Menggunakan ikon angka 1 dari Font Awesome
+                    } else {
+                        icon.classList.add('fa-redo');
+                    }
                 }
             }
         });
     }
 
-    // === 11. INISIALISASI APLIKASI ===
+    // === 12. VOLUME CONTROL (TAMBAHAN UNTUK SAFARI/IOS) ===
+    function addVolumeControl() {
+        const volumeBar = document.getElementById('volume-bar');
+        if (volumeBar) {
+            volumeBar.addEventListener('input', (e) => {
+                if (player && typeof player.setVolume === 'function') {
+                    try {
+                        const volume = parseInt(e.target.value);
+                        player.setVolume(volume);
+                        
+                        // Update volume icon
+                        const volumeIcon = document.getElementById('volume-icon');
+                        if (volumeIcon) {
+                            volumeIcon.classList.remove('fa-volume-off', 'fa-volume-low', 'fa-volume-high');
+                            if (volume === 0) {
+                                volumeIcon.classList.add('fa-volume-off');
+                            } else if (volume < 50) {
+                                volumeIcon.classList.add('fa-volume-low');
+                            } else {
+                                volumeIcon.classList.add('fa-volume-high');
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Error setting volume:', e);
+                    }
+                }
+            });
+        }
+        
+        // Volume icon click to mute/unmute
+        const volumeIcon = document.getElementById('volume-icon');
+        if (volumeIcon) {
+            volumeIcon.addEventListener('click', () => {
+                if (player) {
+                    try {
+                        if (player.isMuted()) {
+                            player.unMute();
+                            if (volumeBar) volumeBar.value = 80;
+                        } else {
+                            player.mute();
+                            if (volumeBar) volumeBar.value = 0;
+                        }
+                    } catch (e) {
+                        console.log('Error muting/unmuting:', e);
+                    }
+                }
+            });
+        }
+    }
+
+    // === 13. SAFARI/IOS SPECIFIC FIXES ===
+    
+    // Handle page visibility changes (important for Safari/iOS)
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            // Page is hidden, pause if playing
+            if (isPlaying && player && typeof player.pauseVideo === 'function') {
+                try {
+                    player.pauseVideo();
+                } catch (e) {
+                    console.log('Error pausing on visibility change:', e);
+                }
+            }
+        }
+    });
+
+    // Handle orientation changes on mobile
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+            // Force a UI update after orientation change
+            updateProgress();
+        }, 500);
+    });
+
+    // Prevent double-tap zoom on iOS
+    if (isIOS) {
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    }
+
+    // === 14. INISIALISASI APLIKASI ===
     initializeTheme();
+    
+    // Add volume control listeners after DOM is ready
+    setTimeout(() => {
+        addVolumeControl();
+    }, 1000);
+
+    // Debug log for Safari/iOS
+    console.log('App initialized');
+    console.log('Is Safari:', isSafari);
+    console.log('Is iOS:', isIOS);
+    console.log('Is Mobile:', isMobileDevice);
+    
+    // Show helpful message for Safari/iOS users
+    if (isSafari || isIOS) {
+        console.log('Safari/iOS detected - autoplay requires user interaction first');
+    }
 });
