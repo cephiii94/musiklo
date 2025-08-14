@@ -69,11 +69,11 @@ body { padding-bottom: 180px; } /* Tambah padding agar player tidak menutupi kon
     transform: translateX(-50%);
     width: calc(100% - 1rem);
     max-width: 500px;
-    height: 100px;
+    height: 120px;
     z-index: 1500;
     background-color: var(--player-bg);
     border: 1px solid var(--border-color);
-    border-radius: 50px; /* Setengah dari tinggi untuk bentuk pil */
+    border-radius: 40px; /* Setengah dari tinggi untuk bentuk pil */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     display: grid;
@@ -90,6 +90,22 @@ body { padding-bottom: 180px; } /* Tambah padding agar player tidak menutupi kon
     border-radius: 50%;
     object-fit: cover;
     justify-self: center; /* Memastikan gambar di tengah kolomnya */
+    box-shadow: 0 0 15px 4px var(--soft-blue); 
+    animation: putar 8s linear infinite;
+}
+
+.player-art-mobile:hover {
+    animation-play-state: paused;
+}
+
+/* Aturan untuk animasi berputar (cukup didefinisikan sekali) */
+@keyframes putar {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .player-info-mobile {
@@ -267,10 +283,27 @@ body { padding-bottom: 180px; } /* Tambah padding agar player tidak menutupi kon
     .floating-player-container { position: fixed; bottom: 1.5rem; left: 20rem; right: 22.5rem; height: 100px; padding: 1rem 1.5rem; background-color: rgba(255, 255, 255, 0.65); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 1rem; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2rem; z-index: 2000; box-shadow: 0 -8px 25px var(--shadow-color); transition: all 0.3s ease; }
     body.dark-mode .floating-player-container { background-color: rgba(42, 42, 58, 0.65); border-color: rgba(78, 78, 80, 0.5); }
     .floating-player-container:hover { transform: translateY(-2px); box-shadow: 0 -12px 35px var(--shadow-color); }
-    .floating-player-container .current-track-info { justify-self: start; }
-    .floating-player-container .current-track-info img { width: 60px; height: 60px; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); display: block; }
-    .floating-player-container .track-details { display: none; }
-    .player-core { display: flex; flex-direction: column-reverse; align-items: center; gap: 0.5rem; width: 100%; justify-self: center; }
+    .floating-player-container .current-track-info { display: flex; align-items: center; gap: 1rem; }
+    
+    .floating-player-container .current-track-info img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        box-shadow: 0 0 15px 4px #ADD8E6; 
+        display: block;
+        animation: putar 8s linear infinite;
+    }
+
+    .floating-player-container .current-track-info img:hover {
+        animation-play-state: paused;
+    }
+
+    /* PERUBAHAN: Menghilangkan judul lagu dan artis */
+    .floating-player-container .track-details { 
+        display: none; 
+    }
+
+    .player-core { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: 100%; justify-self: center; }
     .player-controls { display: flex; justify-content: center; align-items: center; gap: 1rem; }
     .player-controls button { background: none; border: none; color: var(--text-secondary); font-size: 1.1rem; cursor: pointer; transition: color 0.2s, transform 0.2s; padding: 0.5rem; border-radius: 50%; }
     .player-controls button:hover { color: var(--text-primary); background-color: var(--tertiary-bg); transform: scale(1.1); }
@@ -301,42 +334,41 @@ body { padding-bottom: 180px; } /* Tambah padding agar player tidak menutupi kon
     #now-playing-youtube-link:hover { background-color: #FF0000; transform: scale(1.1); }
 
     .card-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 1rem;
-    height: auto; /* Memastikan tinggi fleksibel */
-    min-height: 80px; /* Memberi tinggi minimal agar tidak terlalu gepeng */
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 1rem;
+        height: auto;
+        min-height: 80px;
     }
 
-    /* PERBAIKAN: Agar judul bisa wrap */
     .card-details {
-        flex: 1; /* Memastikan elemen ini mengambil sisa ruang */
-        min-width: 0; /* Mencegah elemen mendorong tombol */
+        flex: 1;
+        min-width: 0;
     }
     .card-details h4 {
         font-size: 1rem;
         color: var(--text-primary);
         margin-bottom: 0.2rem;
-        white-space: normal; /* Mengizinkan teks untuk wrap */
-        word-break: break-word; /* Memecah kata jika perlu */
+        white-space: normal;
+        word-break: break-word;
     }
     .card-details p { font-size: 0.9rem; color: var(--text-secondary); }
     
-.add-btn { 
-    background-color: var(--tertiary-bg); 
-    color: var(--text-primary); 
-    border: none; 
-    width: 40px; 
-    height: 40px; 
-    border-radius: 50%; 
-    font-size: 1.2rem; 
-    cursor: pointer; 
-    transition: all 0.2s; 
-    flex-shrink: 0; /* Mencegah tombol menyusut */ 
-    margin-left: 1rem; 
-    align-self: center; /* DITAMBAHKAN: Agar tombol selalu di tengah secara vertikal */
-}
+    .add-btn { 
+        background-color: var(--tertiary-bg); 
+        color: var(--text-primary); 
+        border: none; 
+        width: 40px; 
+        height: 40px; 
+        border-radius: 50%; 
+        font-size: 1.2rem; 
+        cursor: pointer; 
+        transition: all 0.2s; 
+        flex-shrink: 0;
+        margin-left: 1rem; 
+        align-self: center;
+    }
 
     .add-btn:hover { background-color: var(--accent-primary); color: white; transform: scale(1.1); }
     .tags-section, .played-section { background-color: var(--secondary-bg); padding: 1.5rem; border-radius: 1rem; }
