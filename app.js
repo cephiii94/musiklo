@@ -89,8 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     function onPlayerReady(event) {
         player.setVolume(80);
-        // PERBAIKAN: Panggil fungsi untuk memuat data awal SETELAH player siap.
-        // Ini memastikan lagu tidak akan ditampilkan sebelum pemutar bisa memainkannya.
         loadInitialData();
     }
     function onPlayerStateChange(event) {
@@ -321,6 +319,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const song = currentPlaylist[currentIndex];
             if (player && typeof player.loadVideoById === 'function') {
                 player.loadVideoById(song.videoId);
+                // PERBAIKAN UNTUK iOS/SAFARI:
+                // Perintahkan video untuk langsung berputar setelah di-load.
+                // Ini penting karena iOS memerlukan aksi pengguna langsung untuk memulai playback.
+                player.playVideo(); 
                 updatePlayerUI(song);
                 if (playerContainerMobile.classList.contains('hidden')) {
                     playerContainerMobile.classList.remove('hidden');
@@ -490,6 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === 10. FUNGSI LOGIKA PLAYER TAMBAHAN ===
     function toggleShuffle() {
         isShuffle = !isShuffle;
+        if (currentIndex === -1) return; // Jangan lakukan apa-apa jika tidak ada lagu yang diputar
         const currentSong = currentPlaylist[currentIndex];
 
         if (isShuffle) {
@@ -543,5 +546,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === 11. INISIALISASI APLIKASI ===
     initializeTheme();
-    // loadInitialData(); // <-- BARIS INI DIPINDAHKAN ke dalam fungsi onPlayerReady
 });
