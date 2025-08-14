@@ -89,6 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     function onPlayerReady(event) {
         player.setVolume(80);
+        // PERBAIKAN: Panggil fungsi untuk memuat data awal SETELAH player siap.
+        // Ini memastikan lagu tidak akan ditampilkan sebelum pemutar bisa memainkannya.
+        loadInitialData();
     }
     function onPlayerStateChange(event) {
         isPlaying = (event.data === YT.PlayerState.PLAYING);
@@ -540,5 +543,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === 11. INISIALISASI APLIKASI ===
     initializeTheme();
-    loadInitialData();
+    // loadInitialData(); // <-- BARIS INI DIPINDAHKAN ke dalam fungsi onPlayerReady
 });
