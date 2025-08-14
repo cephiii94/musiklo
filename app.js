@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let progressInterval;
     let isShuffle = false;
     let repeatMode = 'none'; // 'none', 'all', 'one'
+    let playAfterLoad = false; // PERBAIKAN: Bendera untuk menandai pemutaran otomatis
 
     // === 3. LOGIKA TEMA (DARK/LIGHT MODE) ===
     const applyTheme = (theme) => {
@@ -96,6 +97,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isPlaying) startProgressUpdater();
         else clearInterval(progressInterval);
         updatePlayPauseIcons();
+
+        // PERBAIKAN: Logika baru untuk memutar lagu setelah siap
+        if (event.data === YT.PlayerState.CUED && playAfterLoad) {
+            player.playVideo();
+            playAfterLoad = false; // Reset bendera setelah digunakan
+        }
+        
         if (event.data === YT.PlayerState.ENDED) {
             if (repeatMode === 'one') {
                 player.seekTo(0);
@@ -318,11 +326,10 @@ document.addEventListener('DOMContentLoaded', () => {
             currentIndex = index;
             const song = currentPlaylist[currentIndex];
             if (player && typeof player.loadVideoById === 'function') {
+                // PERBAIKAN: Set bendera lalu muat video. Pemutaran akan ditangani oleh onPlayerStateChange
+                playAfterLoad = true;
                 player.loadVideoById(song.videoId);
-                // PERBAIKAN UNTUK iOS/SAFARI:
-                // Perintahkan video untuk langsung berputar setelah di-load.
-                // Ini penting karena iOS memerlukan aksi pengguna langsung untuk memulai playback.
-                player.playVideo(); 
+                
                 updatePlayerUI(song);
                 if (playerContainerMobile.classList.contains('hidden')) {
                     playerContainerMobile.classList.remove('hidden');
