@@ -5,6 +5,7 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 
 exports.handler = async function (event, context) {
+    console.log('Cek API Key:', YOUTUBE_API_KEY ? 'ADA (Aman)' : 'KOSONG (Masalah di sini!)');
     console.log('Mengambil Top Charts dari YouTube API (via Netlify Function).');
     try {
         const response = await axios.get(YOUTUBE_VIDEOS_URL, {

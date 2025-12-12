@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>musiklo - Dengarkan Musik Favoritmu</title>
+    <title>Musiklo - Dengarkan Musik Favoritmu</title>
+    
     <link rel="stylesheet" href="style.css">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 
-    <!-- Header untuk tampilan mobile/tablet -->
     <header class="main-header-mobile">
         <div class="logo">
             <a href="#" id="logo-link-mobile"><h1>musiklo</h1></a>
@@ -29,28 +31,27 @@
         </div>
     </header>
 
-    <!-- Kontainer utama untuk tampilan desktop -->
     <div class="desktop-container">
 
-        <!-- === SIDEBAR KIRI === -->
         <aside class="left-sidebar">
             <div class="logo-desktop">
                 <a href="#" id="logo-link-desktop"><h1>musiklo</h1></a>
             </div>
+            
             <div class="search-bar-desktop">
                 <i class="fas fa-search"></i>
-                <input type="search" id="search-input-desktop" placeholder="Search...">
+                <input type="search" id="search-input-desktop" placeholder="Cari lagu atau artis...">
             </div>
+            
             <nav class="main-nav">
                 <p class="nav-heading">Menu</p>
                 <ul>
                     <li class="active"><a href="#"><i class="fas fa-home"></i> Home</a></li>
                     <li><a href="#"><i class="fas fa-compass"></i> Discover</a></li>
                     <li><a href="#"><i class="fas fa-stream"></i> Browse</a></li>
-                    <li><a href="#"><i class="fas fa-podcast"></i> Podcasts</a></li>
-                    <li><a href="#"><i class="fas fa-broadcast-tower"></i> Radio</a></li>
                 </ul>
             </nav>
+            
             <nav class="library-nav">
                 <p class="nav-heading">Library</p>
                 <ul>
@@ -59,6 +60,7 @@
                     <li><a href="#"><i class="fas fa-users"></i> Artists</a></li>
                 </ul>
             </nav>
+            
             <div class="sidebar-footer">
                 <button id="theme-toggle-desktop" class="theme-toggle-button" title="Ganti Tema">
                     <i class="fas fa-sun"></i>
@@ -75,20 +77,19 @@
             </div>
         </aside>
 
-        <!-- === KONTEN UTAMA === -->
         <main class="main-content">
-            <!-- Konten (Top Charts, Koleksi, dll.) akan di-render oleh JS di sini -->
+            <div class="loader"></div>
         </main>
 
-        <!-- === SIDEBAR KANAN === -->
         <aside class="right-sidebar">
+            
             <div class="now-playing-card">
                  <img id="now-playing-card-art" src="https://placehold.co/300x300/333/fff?text=musiklo" alt="Now Playing Art">
                  <a href="#" id="now-playing-youtube-link" target="_blank" title="Lihat di YouTube"><i class="fab fa-youtube"></i></a>
                  <div class="card-content">
                      <div class="card-details">
-                        <h4 id="now-playing-card-title">Select a Song</h4>
-                        <p id="now-playing-card-artist">Player</p>
+                        <h4 id="now-playing-card-title">Pilih Lagu</h4>
+                        <p id="now-playing-card-artist">Player Ready</p>
                      </div>
                      <button class="add-btn"><i class="fas fa-plus"></i></button>
                  </div>
@@ -120,13 +121,47 @@
                     <a href="#" class="see-all-link">See all</a>
                 </div>
                 <ul class="played-list">
+                    <li>
+                        <img src="https://placehold.co/50x50/89cff0/FFFFFF?text=TS" alt="Art">
+                        <div class="played-details">
+                            <p class="played-title">Blank Space</p>
+                            <p class="played-artist">Taylor Swift</p>
+                        </div>
+                        <p class="played-time">4m</p>
+                    </li>
                 </ul>
             </section>
         </aside>
 
     </div>
+
+    <div class="player-container-mobile hidden">
+        
+        <img id="current-track-art-mobile" class="player-art-mobile" src="https://placehold.co/80x80/333/fff?text=?" alt="Art">
+        
+        <div class="player-info-mobile">
+            <div class="track-details-mobile">
+                <p id="current-track-title-mobile">Pilih Lagu</p>
+                <p id="current-track-artist-mobile">Musiklo</p>
+            </div>
+            
+            <div class="player-controls-mobile">
+                <button id="play-pause-button-mobile" title="Mainkan"><i id="play-pause-icon-mobile" class="fas fa-play-circle"></i></button>
+            </div>
+
+            <div class="progress-bar-container-mobile">
+                <span id="current-time-mobile">0:00</span>
+                <input type="range" id="progress-bar-mobile" value="0" step="1">
+                <span id="total-time-mobile">0:00</span>
+            </div>
+        </div>
+
+        <div class="player-options-mobile">
+            <button id="shuffle-button-mobile"><i class="fas fa-random"></i></button>
+            <button id="repeat-button-mobile"><i class="fas fa-redo"></i></button>
+        </div>
+    </div>
     
-    <!-- === NAVBAR BAWAH (HANYA UNTUK MOBILE) === -->
     <nav class="mobile-nav">
         <ul>
             <li class="active" data-page="home"><a href="#"><i class="fas fa-home"></i><span>Home</span></a></li>
@@ -136,42 +171,9 @@
         </ul>
     </nav>
 
-    <!-- Player Bawah (HANYA UNTUK MOBILE) - STRUKTUR DIPERBAIKI -->
-    <footer class="player-container-mobile hidden">
-        <!-- KOLOM KIRI: Thumbnail -->
-        <img id="current-track-art-mobile" src="https://placehold.co/80x80/333/fff?text=?" alt="Album Art" class="player-art-mobile">
-        
-        <!-- KOLOM TENGAH: Info, Kontrol, Progress -->
-        <div class="player-info-mobile">
-            <div class="track-details-mobile">
-                <p id="current-track-title-mobile">Pilih sebuah lagu</p>
-                <p id="current-track-artist-mobile">musiklo</p>
-            </div>
-            <div class="player-controls-mobile">
-                <button id="prev-button-mobile" title="Sebelumnya"><i class="fas fa-step-backward"></i></button>
-                <button id="play-pause-button-mobile" title="Mainkan/Jeda"><i id="play-pause-icon-mobile" class="fas fa-play-circle"></i></button>
-                <button id="next-button-mobile" title="Berikutnya"><i class="fas fa-step-forward"></i></button>
-                <button id="queue-button-mobile" title="Antrean"><i class="fas fa-list-ul"></i></button>
-            </div>
-            <div class="progress-bar-container-mobile">
-                <span id="current-time-mobile">0:00</span>
-                <input type="range" id="progress-bar-mobile" value="0" step="1">
-                <span id="total-time-mobile">0:00</span>
-            </div>
-        </div>
-
-        <!-- KOLOM KANAN: Shuffle & Repeat -->
-        <div class="player-options-mobile">
-            <button id="shuffle-button-mobile" title="Acak"><i class="fas fa-random"></i></button>
-            <button id="repeat-button-mobile" title="Ulangi"><i class="fas fa-redo"></i></button>
-        </div>
-
-    </footer>
-
-    <div id="youtube-player" style="display: none;"></div>
-
-    <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="app.js"></script>
+    <div id="youtube-player" style="position: absolute; top: -9999px; left: -9999px; width: 0; height: 0; opacity: 0; visibility: hidden;"></div>
+    
+    <script type="module" src="app.js"></script>
 
 </body>
 </html>
