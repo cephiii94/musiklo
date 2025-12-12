@@ -1,4 +1,30 @@
-node_modules
+# --- Dependencies (Wajib) ---
+# Folder ini isinya ribuan file library, jangan di-upload.
+# Biarkan server meng-install sendiri via package.json.
+node_modules/
+
+# --- Environment Variables (Sangat Penting!) ---
+# Menjaga API Key Tuan agar tidak dicuri orang.
 .env
-# Local Netlify folder
-.netlify
+.env.local
+.env.*
+
+# --- Netlify ---
+# Folder temporary saat menjalankan 'netlify dev' di lokal.
+.netlify/
+
+# --- Logs (Sampah Error) ---
+# File log error npm, tidak perlu di-track.
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- System Files (Sampah OS) ---
+# Sampah otomatis dari Mac dan Windows.
+.DS_Store
+Thumbs.db
+
+# --- Editor Config (Opsional) ---
+# Settingan VS Code pribadi Tuan.
+.vscode/
+.idea/
