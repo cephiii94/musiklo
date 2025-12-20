@@ -55,11 +55,14 @@ body { padding-bottom: 180px; } /* Tambah padding agar player tidak menutupi kon
 .main-header-mobile .search-bar button { padding: 0.5rem 1rem; border: none; background-color: var(--accent-secondary); color: white; border-radius: 0 20px 20px 0; cursor: pointer; }
 
 /* Style untuk Navbar Mobile */
-.mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background-color: var(--secondary-bg); box-shadow: 0 -2px 15px var(--shadow-color); display: flex; justify-content: center; align-items: center; z-index: 1100; }
+.mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background-color: var(--secondary-bg); box-shadow: 0 -2px 15px var(--shadow-color); display: flex; justify-content: center; align-items: center; z-index: 1100; transition: transform 0.3s ease-in-out; }
 .mobile-nav ul { list-style: none; display: flex; justify-content: space-around; align-items: center; width: 100%; height: 100%; }
 .mobile-nav li a { display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; color: var(--text-secondary); padding: 0.5rem 1rem; font-size: 0.7rem; transition: color 0.2s; }
 .mobile-nav li a i { font-size: 1.3rem; margin-bottom: 4px; }
 .mobile-nav li.active a { color: var(--accent-primary); }
+.mobile-nav.nav-hidden {
+    transform: translateY(100%); /* Geser ke bawah sebesar tinggi elemennya */
+}
 
 /* === PERBAIKAN TOTAL: Player Mobile Floating === */
 .player-container-mobile {

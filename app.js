@@ -222,6 +222,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Halaman lain bisa ditambahkan nanti
             });
         }
+
+        // ===============================================
+        // [TAMBAHAN BRI] FITUR AUTO-HIDE NAVIGASI SAAT SCROLL
+        // ===============================================
+        let lastScrollY = window.scrollY;
+        
+        // Kita gunakan throttle sederhana lewat requestAnimationFrame kalau mau super smooth,
+        // tapi untuk sekarang logic dasar ini sudah cukup efektif.
+        window.addEventListener('scroll', () => {
+            // Cek biar aman kalau elemennya gak ada (mode desktop)
+            const nav = document.querySelector('.mobile-nav');
+            if (!nav) return;
+
+            const currentScrollY = window.scrollY;
+            
+            // Jika scroll ke bawah DAN sudah scroll lebih dari 50px dari atas
+            if (currentScrollY > lastScrollY && currentScrollY > 50) {
+                nav.classList.add('nav-hidden'); // Tambah class CSS untuk sembunyi
+            } else {
+                nav.classList.remove('nav-hidden'); // Hapus class untuk muncul lagi
+            }
+
+            lastScrollY = currentScrollY;
+        });
+        // ===============================================
     };
 
     // GLOBAL DELEGATION (Menangani klik di elemen dinamis)
