@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Musiklo - Dengarkan Musik Favoritmu</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎵</text></svg>">
     
     <link rel="stylesheet" href="style.css">
     
@@ -30,6 +31,9 @@
             </button>
         </div>
     </header>
+
+    <!-- Mobile Content Container -->
+    <div class="main-content-mobile"></div>
 
     <div class="desktop-container">
 
@@ -58,6 +62,12 @@
                     <li><a href="#"><i class="fas fa-compact-disc"></i> Albums</a></li>
                     <li><a href="#"><i class="fas fa-music"></i> Songs</a></li>
                     <li><a href="#"><i class="fas fa-users"></i> Artists</a></li>
+                    <li id="create-playlist-btn" style="cursor: pointer;"><a href="#"><i class="fas fa-plus-square"></i> Buat Playlist</a></li>
+                </ul>
+                
+                <p class="nav-heading" style="margin-top: 1.5rem;">My Playlists</p>
+                <ul id="user-playlists-container">
+                    <!-- User playlists will be appended here -->
                 </ul>
             </nav>
             
@@ -146,7 +156,9 @@
             </div>
             
             <div class="player-controls-mobile">
+                <button id="prev-button-mobile" title="Sebelumnya"><i class="fas fa-step-backward"></i></button>
                 <button id="play-pause-button-mobile" title="Mainkan"><i id="play-pause-icon-mobile" class="fas fa-play-circle"></i></button>
+                <button id="next-button-mobile" title="Selanjutnya"><i class="fas fa-step-forward"></i></button>
             </div>
 
             <div class="progress-bar-container-mobile">
@@ -174,6 +186,25 @@
     <div id="youtube-player" style="position: absolute; top: -9999px; left: -9999px; width: 0; height: 0; opacity: 0; visibility: hidden;"></div>
     
     <script type="module" src="app.js"></script>
+
+    <!-- Modal Buat Playlist -->
+    <div id="playlist-modal" class="modal hidden">
+        <div class="modal-content">
+            <span id="close-modal" class="close-button">&times;</span>
+            <h2>Tambah Playlist</h2>
+            <form id="playlist-form">
+                <div class="form-group">
+                    <label for="playlist-name">Nama Playlist</label>
+                    <input type="text" id="playlist-name" placeholder="Contoh: Lagu Galau" required>
+                </div>
+                <div class="form-group">
+                    <label for="playlist-link">Link YouTube</label>
+                    <input type="url" id="playlist-link" placeholder="https://www.youtube.com/watch?v=..." required>
+                </div>
+                <button type="submit" class="submit-btn">Simpan</button>
+            </form>
+        </div>
+    </div>
 
 </body>
 </html>

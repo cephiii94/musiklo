@@ -74,7 +74,8 @@ initYTPlayer(elementId) {
                 'playsinline': 1, 
                 'rel': 0, 
                 'showinfo': 0,
-                'origin': window.location.origin // Penting agar tidak error CORS
+                'origin': window.location.origin, // Penting agar tidak error CORS
+                'host': 'https://www.youtube.com'
             },
             events: {
                 'onReady': (e) => this.onPlayerReady(e),

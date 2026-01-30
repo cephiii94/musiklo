@@ -10,7 +10,7 @@ export { decodeHtml, formatTime };
 // Cache elemen DOM agar tidak dicari berulang-ulang
 export const DOM = {
     mainContent: document.querySelector('.main-content'),
-    mainContentMobile: document.querySelector('.main-content-mobile') || null, 
+    mainContentMobile: document.querySelector('.main-content-mobile'), 
     progressBarDesktop: document.getElementById('progress-bar'),
     currentTimeDesktop: document.getElementById('current-time-display'),
     totalTimeDesktop: document.getElementById('total-time-display'),
@@ -19,18 +19,6 @@ export const DOM = {
     lyricsHeader: document.getElementById('lyrics-header')
 };
 
-// Pastikan elemen mobile ter-create jika belum ada (Helper)
-export const ensureMobileContainer = () => {
-    if (!DOM.mainContentMobile) {
-        DOM.mainContentMobile = document.createElement('div');
-        DOM.mainContentMobile.className = 'main-content-mobile';
-        const desktopContainer = document.querySelector('.desktop-container');
-        if (desktopContainer) {
-            document.body.insertBefore(DOM.mainContentMobile, desktopContainer);
-        }
-    }
-    return DOM.mainContentMobile;
-};
 
 // Fungsi Render Grid Lagu
 const createSongGridHTML = (playlist, playlistName, limit = -1) => {
@@ -58,7 +46,7 @@ const createSongGridHTML = (playlist, playlistName, limit = -1) => {
 
 // Render Halaman Utama
 export const renderHomePage = (topCharts, koleksi) => {
-    const mobileContainer = ensureMobileContainer();
+    const mobileContainer = DOM.mainContentMobile;
     
     // HTML Template untuk Desktop
     DOM.mainContent.innerHTML = `
@@ -147,9 +135,51 @@ export const renderFloatingPlayer = () => {
     DOM.mainContent.insertAdjacentHTML('beforeend', playerHTML);
 };
 
+
+
+// Render Halaman Library (Mobile)
+export const renderLibraryPage = (playlists) => {
+    const mobileContainer = DOM.mainContentMobile;
+    
+    let playlistsHTML = '';
+    if (playlists.length === 0) {
+        playlistsHTML = '<p style="color:var(--text-secondary); text-align:center; padding:2rem;">Belum ada playlist. Buat satu sekarang!</p>';
+    } else {
+        playlistsHTML = '<ul class="mobile-playlist-list">';
+        playlists.forEach(p => {
+            playlistsHTML += `
+                <li>
+                    <a href="#" class="user-playlist-link-mobile" data-name="${decodeHtml(p.name)}">
+                        <div class="playlist-icon"><i class="fas fa-music"></i></div>
+                        <div class="playlist-info">
+                            <span class="playlist-name">${decodeHtml(p.name)}</span>
+                            <span class="playlist-count">${p.songs.length} Lagu</span>
+                        </div>
+                        <i class="fas fa-chevron-right" style="color:var(--text-secondary)"></i>
+                    </a>
+                </li>`;
+        });
+        playlistsHTML += '</ul>';
+    }
+
+    mobileContainer.innerHTML = `
+        <section class="library-section-mobile">
+            <div class="library-header-mobile">
+                <h2>Library</h2>
+                <button id="create-playlist-btn-mobile" class="create-btn-mobile">
+                    <i class="fas fa-plus"></i> Buat Playlist
+                </button>
+            </div>
+            ${playlistsHTML}
+        </section>
+    `;
+    
+    renderFloatingPlayer();
+};
+
 // Render Hasil Pencarian
 export const renderSearchResults = (results, query) => {
-    const mobileContainer = ensureMobileContainer();
+    const mobileContainer = DOM.mainContentMobile;
     const gridHTML = createSongGridHTML(results, 'search');
     
     DOM.mainContent.innerHTML = `
@@ -169,6 +199,35 @@ export const renderSearchResults = (results, query) => {
     renderFloatingPlayer();
 };
 
+// Render Halaman Playlist User
+export const renderPlaylistPage = (playlistName, songs) => {
+    const mobileContainer = DOM.mainContentMobile;
+    const gridHTML = createSongGridHTML(songs, `user-playlist-${playlistName}`);
+
+    // Desktop
+    DOM.mainContent.innerHTML = `
+        <div id="main-content-scroll-area">
+            <section class="playlist-section-desktop">
+                <div class="playlist-header"><h2>Playlist: ${decodeHtml(playlistName)}</h2></div>
+                ${songs.length === 0 ? '<p style="color:var(--text-secondary)">Belum ada lagu di playlist ini.</p>' : `<div class="song-grid">${gridHTML}</div>`}
+            </section>
+        </div>`;
+
+    // Mobile
+    mobileContainer.innerHTML = `
+        <section class="playlist-section-mobile">
+            <div class="playlist-header-mobile" style="display: flex; align-items: center; gap: 1rem;">
+                <button id="back-to-library-btn" style="background:none; border:none; color:var(--text-primary); font-size:1.2rem; cursor:pointer;">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2 style="margin:0;">${decodeHtml(playlistName)}</h2>
+            </div>
+             ${songs.length === 0 ? '<p style="color:var(--text-secondary); padding: 1rem;">Belum ada lagu di playlist ini.</p>' : `<div class="song-grid">${gridHTML}</div>`}
+        </section>`;
+
+    renderFloatingPlayer();
+};
+
 // Update Tampilan Lirik
 export const updateLyricsDisplay = async (artist, title) => {
     if (!DOM.lyricsText) return;
@@ -184,5 +243,5 @@ export const updateLyricsDisplay = async (artist, title) => {
 export const showLoader = () => {
     const loaderHTML = '<div class="loader"></div>';
     DOM.mainContent.innerHTML = loaderHTML;
-    ensureMobileContainer().innerHTML = loaderHTML;
+    DOM.mainContentMobile.innerHTML = loaderHTML;
 };

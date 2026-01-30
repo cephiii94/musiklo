@@ -3,6 +3,7 @@ import { ThemeManager } from './js/theme.js';
 import { MusicPlayer } from './js/player.js';
 import * as UI from './js/ui.js'; // Kita import semua dari UI
 import * as API from './js/api.js';
+import { extractYouTubeId } from './js/utils.js';
 
 // === 1. INISIALISASI ===
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,7 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let topChartsData = [];
     let koleksiData = [];
     let currentSearchResults = [];
-    let activePlaylistSource = ''; // 'topcharts', 'koleksi', 'search'
+    let userPlaylistsData = []; // Data Playlist User
+    let activePlaylistSource = ''; // 'topcharts', 'koleksi', 'search', 'user-playlist'
 
     // === 2. SETUP PLAYER & CALLBACKS ===
     const player = new MusicPlayer({
@@ -49,11 +51,19 @@ document.addEventListener('DOMContentLoaded', () => {
             topChartsData = topCharts;
             koleksiData = koleksi;
             
+            // Load User Playlists dari LocalStorage
+            loadUserPlaylists();
+
             // Render Halaman
             UI.renderHomePage(topChartsData, koleksiData);
+
+            // Render Sidebar Playlists
+            renderUserPlaylistsUI();
             
             // Setup listener untuk elemen yang baru dirender
-            setupGlobalListeners();
+            // Setup listener untuk elemen yang baru dirender (hanya jika belum ada)
+            // setupGlobalListeners(); // DIPINDAHKAN KE BAWAH
+            // setupPlaylistListeners(); // DIPINDAHKAN KE BAWAH
             
         } catch (error) {
             console.error(error);
@@ -69,6 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (source === 'topcharts') playlistToLoad = topChartsData;
         else if (source === 'koleksi') playlistToLoad = koleksiData;
         else if (source === 'search') playlistToLoad = currentSearchResults;
+        else if (source.startsWith('user-playlist-')) {
+            const playlistName = source.replace('user-playlist-', '');
+            const target = userPlaylistsData.find(p => p.name === playlistName);
+            if (target) playlistToLoad = target.songs;
+        }
 
         // Jika sumber playlist berubah, load ulang ke player
         // Atau jika playlist kosong (awal main), load juga
@@ -172,6 +187,152 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === 5. EVENT LISTENERS (DELEGATION) ===
     
+
+
+    // === 5B. PLAYLIST FEATURE LOGIC ===
+    
+    const loadUserPlaylists = () => {
+        const stored = localStorage.getItem('musiklo_playlists');
+        if (stored) {
+            try {
+                userPlaylistsData = JSON.parse(stored);
+            } catch (e) {
+                console.error("Gagal parse local storage", e);
+                userPlaylistsData = [];
+            }
+        }
+    };
+
+    const saveUserPlaylists = () => {
+        localStorage.setItem('musiklo_playlists', JSON.stringify(userPlaylistsData));
+        renderUserPlaylistsUI();
+    };
+
+    const renderUserPlaylistsUI = () => {
+        const container = document.getElementById('user-playlists-container');
+        if (!container) return;
+
+        container.innerHTML = ''; // Reset
+        userPlaylistsData.forEach(playlist => {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="#" class="user-playlist-link" data-name="${playlist.name}"><i class="fas fa-list-music"></i> ${playlist.name}</a>`;
+            container.appendChild(li);
+        });
+
+        // Re-attach listeners for new items
+        container.querySelectorAll('.user-playlist-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const playlistName = link.dataset.name;
+                const playlist = userPlaylistsData.find(p => p.name === playlistName);
+                if (playlist) {
+                    // Update UI dahulu
+                    UI.renderPlaylistPage(playlistName, playlist.songs);
+                    
+                    // Setup listener elemen baru
+                    setupGlobalListeners(); 
+
+                    // Load ke player jika ada lagu
+                    if (playlist.songs.length > 0) {
+                        player.loadPlaylist(playlist.songs, `user-playlist-${playlistName}`);
+                        activePlaylistSource = `user-playlist-${playlistName}`;
+                        player.playAt(0); 
+                    }
+                } else {
+                    alert('Playlist ini kosong!');
+                }
+            });
+        });
+    };
+
+    const setupPlaylistListeners = () => {
+        // 1. Tombol Buat Playlist (Buka Modal) - Pakai Delegation untuk handle tombol Desktop & Mobile
+        document.body.addEventListener('click', (e) => {
+            const btn = e.target.closest('#create-playlist-btn') || e.target.closest('#create-playlist-btn-mobile');
+            if (btn) {
+                e.preventDefault();
+                const modal = document.getElementById('playlist-modal');
+                if(modal) modal.classList.remove('hidden');
+            }
+        });
+
+        const modal = document.getElementById('playlist-modal');
+        const btnClose = document.getElementById('close-modal');
+        const form = document.getElementById('playlist-form');
+
+        if (btnClose && modal) {
+            btnClose.addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
+        }
+
+        // Close on outside click
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        });
+
+        // 2. Form Submit
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const nameInput = document.getElementById('playlist-name');
+                const linkInput = document.getElementById('playlist-link');
+                const submitBtn = form.querySelector('.submit-btn');
+
+                const name = nameInput.value.trim();
+                const link = linkInput.value.trim();
+
+                if (!name || !link) return;
+
+                // Extract ID
+                const videoId = extractYouTubeId(link);
+                if (!videoId) {
+                    alert('Link YouTube tidak valid!');
+                    return;
+                }
+
+                // UI Loading state
+                const originalBtnText = submitBtn.textContent;
+                submitBtn.textContent = 'Memproses...';
+                submitBtn.disabled = true;
+
+                try {
+                    // Fetch params (Title, Thumbnail)
+                    const oembed = await API.fetchOEmbedData(videoId);
+                    const title = oembed ? oembed.title : 'Lagu Baru';
+                    const artist = oembed ? oembed.author_name : 'Unknown Artist';
+                    const thumbnailUrl = oembed ? oembed.thumbnail_url : `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+
+                    const newSong = { videoId, title, artist, thumbnailUrl };
+
+                    // Cek apakah playlist sudah ada
+                    let playlistIndex = userPlaylistsData.findIndex(p => p.name === name);
+                    if (playlistIndex === -1) {
+                        // Buat baru
+                        userPlaylistsData.push({ name, songs: [newSong] });
+                        alert(`Playlist "${name}" berhasil dibuat!`);
+                    } else {
+                        // Tambah ke existing
+                        userPlaylistsData[playlistIndex].songs.push(newSong);
+                        alert(`Lagu ditambahkan ke playlist "${name}"!`);
+                    }
+
+                    saveUserPlaylists();
+                    form.reset();
+                    modal.classList.add('hidden');
+                } catch (err) {
+                    console.error(err);
+                    alert('Terjadi kesalahan saat menyimpan playlist.');
+                } finally {
+                    submitBtn.textContent = originalBtnText;
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+    };
+
+
     const setupGlobalListeners = () => {
         // Listener Pencarian
         const searchInputs = [document.getElementById('search-input-desktop'), document.getElementById('search-input-mobile')];
@@ -214,6 +375,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const page = target.dataset.page;
                 if(page === 'home') initApp();
+                else if(page === 'library') {
+                    UI.renderLibraryPage(userPlaylistsData);
+                    // Attach listener untuk playlist items di mobile (Delegation via global click sudah handle klik lagu, 
+                    // tapi kita butuh handle klik playlist untuk buka detail)
+                    // Kita bisa tambahkan listener khusus di sini atau pakai global delegation.
+                    // Biar rapi, kita pakai global delegation di bawah.
+                }
                 else if(page === 'search') {
                     const input = document.getElementById('search-input-mobile');
                     if(input) input.focus();
@@ -261,50 +429,66 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 2. Tombol Player (Play, Next, Prev, Shuffle, Repeat)
-        // Kita gunakan ID yang konsisten di UI Desktop & Mobile
-        const target = e.target.closest('button');
-        if (!target) return;
-        const id = target.id;
-
-        if (id.includes('play-pause')) player.togglePlay();
-        else if (id.includes('next')) player.next();
-        else if (id.includes('prev')) player.prev();
-        else if (id.includes('shuffle')) {
-            const isShuffle = player.toggleShuffle();
-            target.classList.toggle('active', isShuffle);
-        }
-        else if (id.includes('repeat')) {
-            const mode = player.toggleRepeat();
-            // Update icon repeat logic visual
-            const icon = target.querySelector('i');
-            target.classList.remove('active');
-            if(icon) icon.className = 'fas fa-redo'; // reset
-            
-            if (mode === 'all') target.classList.add('active');
-            else if (mode === 'one') {
-                target.classList.add('active');
-                if(icon) icon.className = 'fas fa-1'; // Icon angka 1
+        const btnTarget = e.target.closest('button');
+        if (btnTarget) {
+            const id = btnTarget.id;
+            if (id.includes('play-pause')) player.togglePlay();
+            else if (id.includes('next')) player.next();
+            else if (id.includes('prev')) player.prev();
+            else if (id.includes('shuffle')) {
+                const isShuffle = player.toggleShuffle();
+                btnTarget.classList.toggle('active', isShuffle);
             }
-        }
-        
-        // 3. Tombol Show All / Hide
-        if (target.classList.contains('show-all-button')) {
-            const section = target.closest('section');
-            section.querySelectorAll('.song-item-grid.hidden').forEach(el => el.classList.remove('hidden'));
-            target.classList.add('hidden');
-            section.querySelector('.hide-button').classList.remove('hidden');
-        } else if (target.classList.contains('hide-button')) {
-             const section = target.closest('section');
-             section.querySelectorAll('.song-item-grid').forEach((el, idx) => {
-                 if(idx >= 5) el.classList.add('hidden');
-             });
-             target.classList.add('hidden');
-             section.querySelector('.show-all-button').classList.remove('hidden');
+            else if (id.includes('repeat')) {
+                const mode = player.toggleRepeat();
+                const icon = btnTarget.querySelector('i');
+                btnTarget.classList.remove('active');
+                if(icon) icon.className = 'fas fa-redo'; 
+                if (mode === 'all') btnTarget.classList.add('active');
+                else if (mode === 'one') {
+                    btnTarget.classList.add('active');
+                    if(icon) icon.className = 'fas fa-1'; 
+                }
+            }
+            
+            // 3. Tombol Show All / Hide
+            if (btnTarget.classList.contains('show-all-button')) {
+                const section = btnTarget.closest('section');
+                section.querySelectorAll('.song-item-grid.hidden').forEach(el => el.classList.remove('hidden'));
+                btnTarget.classList.add('hidden');
+                section.querySelector('.hide-button').classList.remove('hidden');
+            } else if (btnTarget.classList.contains('hide-button')) {
+                 const section = btnTarget.closest('section');
+                 section.querySelectorAll('.song-item-grid').forEach((el, idx) => {
+                     if(idx >= 5) el.classList.add('hidden');
+                 });
+                 btnTarget.classList.add('hidden');
+                 section.querySelector('.show-all-button').classList.remove('hidden');
+            }
+            return; // Stop if button handled
         }
         
         // 4. Lirik Toggle
-        if (target.closest('.lyrics-header')) {
+        if (e.target.closest('.lyrics-header')) {
             UI.DOM.lyricsSection.classList.toggle('active');
+        }
+
+        // 5. Klik Playlist di Mobile Library
+        const mobilePlaylistLink = e.target.closest('.user-playlist-link-mobile');
+        if (mobilePlaylistLink) {
+            e.preventDefault();
+            const playlistName = mobilePlaylistLink.dataset.name;
+            const playlist = userPlaylistsData.find(p => p.name === playlistName);
+            if (playlist) {
+                UI.renderPlaylistPage(playlistName, playlist.songs);
+                window.scrollTo({top:0, behavior:'smooth'});
+            }
+        }
+
+        // 6. Tombol Back di Mobile Playlist
+        if (e.target.closest('#back-to-library-btn')) {
+            e.preventDefault();
+            UI.renderLibraryPage(userPlaylistsData);
         }
     });
 
@@ -319,5 +503,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // === 6. JALANKAN APLIKASI ===
+
+    setupGlobalListeners();
+    setupPlaylistListeners();
     initApp();
 });
