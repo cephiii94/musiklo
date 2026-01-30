@@ -13,6 +13,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
 </head>
 <body>
 
@@ -205,6 +209,21 @@
             </form>
         </div>
     </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <h3 id="confirm-title">Konfirmasi</h3>
+            <p id="confirm-message" style="margin-bottom: 2rem;">Apakah Anda yakin?</p>
+            <div style="display: flex; justify-content: center; gap: 1rem;">
+                <button id="confirm-cancel-btn" class="submit-btn" style="background:#555;">Batal</button>
+                <button id="confirm-yes-btn" class="submit-btn" style="background:#ff4444;">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
 
 </body>
 </html>

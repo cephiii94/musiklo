@@ -1,27 +1,26 @@
 // js/ui.js
 
 // 1. KITA IMPORT DULU DARI UTILS
-import { decodeHtml, cleanSongTitle, formatTime } from './utils.js';
-import { fetchLyrics } from './api.js';
+import { decodeHtml, cleanSongTitle, formatTime } from "./utils.js";
+import { fetchLyrics } from "./api.js";
 
 // 2. [PENTING] KITA EXPORT LAGI SUPAYA BISA DIPAKAI DI APP.JS
-export { decodeHtml, formatTime }; 
+export { decodeHtml, formatTime };
 
 // Cache elemen DOM agar tidak dicari berulang-ulang
 export const DOM = {
-    mainContent: document.querySelector('.main-content'),
-    mainContentMobile: document.querySelector('.main-content-mobile'), 
-    progressBarDesktop: document.getElementById('progress-bar'),
-    currentTimeDesktop: document.getElementById('current-time-display'),
-    totalTimeDesktop: document.getElementById('total-time-display'),
-    lyricsText: document.getElementById('lyrics-text'),
-    lyricsSection: document.querySelector('.lyrics-section'),
-    lyricsHeader: document.getElementById('lyrics-header')
+  mainContent: document.querySelector(".main-content"),
+  mainContentMobile: document.querySelector(".main-content-mobile"),
+  progressBarDesktop: document.getElementById("progress-bar"),
+  currentTimeDesktop: document.getElementById("current-time-display"),
+  totalTimeDesktop: document.getElementById("total-time-display"),
+  lyricsText: document.getElementById("lyrics-text"),
+  lyricsSection: document.querySelector(".lyrics-section"),
+  lyricsHeader: document.getElementById("lyrics-header"),
 };
 
-
 // Fungsi Render Grid Lagu
-const createSongGridHTML = (playlist, playlistName, limit = -1) => {
+const createSongGridHTML = (playlist, playlistName, limit = -1, showDelete = false) => {
     let gridHTML = '';
     const itemsToRender = limit === -1 ? playlist : playlist.slice(0, limit);
     
@@ -31,11 +30,17 @@ const createSongGridHTML = (playlist, playlistName, limit = -1) => {
         const title = decodeHtml(song.title);
         const artist = decodeHtml(song.artist);
         
+        const deleteBtnHTML = showDelete ? 
+            `<button class="remove-song-btn" data-index="${index}" data-playlist="${playlistName}" title="Hapus dari playlist" style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer;"><i class="fas fa-times"></i></button>` 
+            : '';
+
         gridHTML += `
             <div class="song-item-grid ${hiddenClass}" 
                  data-index="${index}" 
                  data-playlist="${playlistName}" 
-                 data-video-id="${song.videoId}">
+                 data-video-id="${song.videoId}"
+                 style="position:relative;">
+                ${deleteBtnHTML}
                 <img src="${song.thumbnailUrl}" alt="${title}" loading="lazy">
                 <p class="title" title="${title}">${title}</p>
                 <p class="artist">${artist}</p>
@@ -46,20 +51,20 @@ const createSongGridHTML = (playlist, playlistName, limit = -1) => {
 
 // Render Halaman Utama
 export const renderHomePage = (topCharts, koleksi) => {
-    const mobileContainer = DOM.mainContentMobile;
-    
-    // HTML Template untuk Desktop
-    DOM.mainContent.innerHTML = `
+  const mobileContainer = DOM.mainContentMobile;
+
+  // HTML Template untuk Desktop
+  DOM.mainContent.innerHTML = `
         <div id="main-content-scroll-area">
             <section id="top-charts-section" class="playlist-section-desktop">
                 <div class="playlist-header">
                     <h2>Top Charts</h2>
                     <div id="top-charts-controls-desktop" class="show-all-container">
-                         ${topCharts.length > 5 ? '<button class="show-all-button">Lihat Semua</button><button class="hide-button hidden">Sembunyikan</button>' : ''}
+                         ${topCharts.length > 5 ? '<button class="show-all-button">Lihat Semua</button><button class="hide-button hidden">Sembunyikan</button>' : ""}
                     </div>
                 </div>
                 <div id="top-charts-container-desktop" class="song-grid">
-                    ${createSongGridHTML(topCharts, 'topcharts')}
+                    ${createSongGridHTML(topCharts, "topcharts")}
                 </div>
             </section>
             <section id="koleksi-section" class="playlist-section-desktop">
@@ -67,22 +72,22 @@ export const renderHomePage = (topCharts, koleksi) => {
                     <h2>Koleksi Lokal</h2>
                 </div>
                 <div id="koleksi-container-desktop" class="song-grid">
-                    ${createSongGridHTML(koleksi, 'koleksi')}
+                    ${createSongGridHTML(koleksi, "koleksi")}
                 </div>
             </section>
         </div>`;
 
-    // HTML Template untuk Mobile
-    mobileContainer.innerHTML = `
+  // HTML Template untuk Mobile
+  mobileContainer.innerHTML = `
         <section class="playlist-section-mobile">
             <div class="playlist-header-mobile">
                 <h2>Top Charts</h2>
                 <div id="top-charts-controls-mobile" class="show-all-container">
-                     ${topCharts.length > 5 ? '<button class="show-all-button">Lihat Semua</button><button class="hide-button hidden">Sembunyikan</button>' : ''}
+                     ${topCharts.length > 5 ? '<button class="show-all-button">Lihat Semua</button><button class="hide-button hidden">Sembunyikan</button>' : ""}
                 </div>
             </div>
             <div id="top-charts-container-mobile" class="song-grid">
-                ${createSongGridHTML(topCharts, 'topcharts')}
+                ${createSongGridHTML(topCharts, "topcharts")}
             </div>
         </section>
         <section class="playlist-section-mobile">
@@ -90,18 +95,18 @@ export const renderHomePage = (topCharts, koleksi) => {
                 <h2>Koleksi Lokal</h2>
             </div>
             <div id="koleksi-container-mobile" class="song-grid">
-                ${createSongGridHTML(koleksi, 'koleksi')}
+                ${createSongGridHTML(koleksi, "koleksi")}
             </div>
         </section>`;
-        
-    renderFloatingPlayer();
+
+  renderFloatingPlayer();
 };
 
 // Render Floating Player (Jika belum ada)
 export const renderFloatingPlayer = () => {
-    if (document.querySelector('.floating-player-container')) return;
+  if (document.querySelector(".floating-player-container")) return;
 
-    const playerHTML = `
+  const playerHTML = `
         <div class="floating-player-container">
             <div class="current-track-info">
                 <img id="current-track-art" src="https://placehold.co/60x60/333/fff?text=?" alt="Album Art">
@@ -131,23 +136,22 @@ export const renderFloatingPlayer = () => {
                 </div>
             </div>
         </div>`;
-    
-    DOM.mainContent.insertAdjacentHTML('beforeend', playerHTML);
+
+  DOM.mainContent.insertAdjacentHTML("beforeend", playerHTML);
 };
-
-
 
 // Render Halaman Library (Mobile)
 export const renderLibraryPage = (playlists) => {
-    const mobileContainer = DOM.mainContentMobile;
-    
-    let playlistsHTML = '';
-    if (playlists.length === 0) {
-        playlistsHTML = '<p style="color:var(--text-secondary); text-align:center; padding:2rem;">Belum ada playlist. Buat satu sekarang!</p>';
-    } else {
-        playlistsHTML = '<ul class="mobile-playlist-list">';
-        playlists.forEach(p => {
-            playlistsHTML += `
+  const mobileContainer = DOM.mainContentMobile;
+
+  let playlistsHTML = "";
+  if (playlists.length === 0) {
+    playlistsHTML =
+      '<p style="color:var(--text-secondary); text-align:center; padding:2rem;">Belum ada playlist. Buat satu sekarang!</p>';
+  } else {
+    playlistsHTML = '<ul class="mobile-playlist-list">';
+    playlists.forEach((p) => {
+      playlistsHTML += `
                 <li>
                     <a href="#" class="user-playlist-link-mobile" data-name="${decodeHtml(p.name)}">
                         <div class="playlist-icon"><i class="fas fa-music"></i></div>
@@ -158,11 +162,11 @@ export const renderLibraryPage = (playlists) => {
                         <i class="fas fa-chevron-right" style="color:var(--text-secondary)"></i>
                     </a>
                 </li>`;
-        });
-        playlistsHTML += '</ul>';
-    }
+    });
+    playlistsHTML += "</ul>";
+  }
 
-    mobileContainer.innerHTML = `
+  mobileContainer.innerHTML = `
         <section class="library-section-mobile">
             <div class="library-header-mobile">
                 <h2>Library</h2>
@@ -173,42 +177,55 @@ export const renderLibraryPage = (playlists) => {
             ${playlistsHTML}
         </section>
     `;
-    
-    renderFloatingPlayer();
+
+  renderFloatingPlayer();
 };
 
 // Render Hasil Pencarian
 export const renderSearchResults = (results, query) => {
-    const mobileContainer = DOM.mainContentMobile;
-    const gridHTML = createSongGridHTML(results, 'search');
-    
-    DOM.mainContent.innerHTML = `
+  const mobileContainer = DOM.mainContentMobile;
+  const gridHTML = createSongGridHTML(results, "search");
+
+  DOM.mainContent.innerHTML = `
         <div id="main-content-scroll-area">
             <section class="playlist-section-desktop">
                 <div class="playlist-header"><h2>Hasil untuk "${decodeHtml(query)}"</h2></div>
                 <div class="song-grid">${gridHTML}</div>
             </section>
         </div>`;
-        
-    mobileContainer.innerHTML = `
+
+  mobileContainer.innerHTML = `
         <section class="playlist-section-mobile">
             <h2>Hasil untuk "${decodeHtml(query)}"</h2>
             <div class="song-grid">${gridHTML}</div>
         </section>`;
-        
-    renderFloatingPlayer();
+
+  renderFloatingPlayer();
 };
 
 // Render Halaman Playlist User
 export const renderPlaylistPage = (playlistName, songs) => {
     const mobileContainer = DOM.mainContentMobile;
-    const gridHTML = createSongGridHTML(songs, `user-playlist-${playlistName}`);
+    // Pass showDelete = true
+    const gridHTML = createSongGridHTML(songs, `user-playlist-${playlistName}`, -1, true);
+
+    const deleteButtonHTML = `
+        <button id="delete-playlist-btn" style="margin-left:auto; background:#ff4444; color:white; border:none; padding:0.5rem 1rem; border-radius:20px; cursor:pointer;" title="Hapus Playlist Ini">
+            <i class="fas fa-trash"></i> <span class="hide-on-mobile">Hapus</span>
+        </button>
+    `;
 
     // Desktop
     DOM.mainContent.innerHTML = `
         <div id="main-content-scroll-area">
             <section class="playlist-section-desktop">
-                <div class="playlist-header"><h2>Playlist: ${decodeHtml(playlistName)}</h2></div>
+                <div class="playlist-header" style="display: flex; align-items: center; gap: 1rem;">
+                    <button id="back-to-home-desktop-btn" class="back-button-desktop" style="background:none; border:none; color:var(--text-primary); font-size:1.5rem; cursor:pointer;" title="Kembali ke Home">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h2 style="margin:0;">Playlist: ${decodeHtml(playlistName)}</h2>
+                    ${deleteButtonHTML}
+                </div>
                 ${songs.length === 0 ? '<p style="color:var(--text-secondary)">Belum ada lagu di playlist ini.</p>' : `<div class="song-grid">${gridHTML}</div>`}
             </section>
         </div>`;
@@ -216,11 +233,16 @@ export const renderPlaylistPage = (playlistName, songs) => {
     // Mobile
     mobileContainer.innerHTML = `
         <section class="playlist-section-mobile">
-            <div class="playlist-header-mobile" style="display: flex; align-items: center; gap: 1rem;">
-                <button id="back-to-library-btn" style="background:none; border:none; color:var(--text-primary); font-size:1.2rem; cursor:pointer;">
-                    <i class="fas fa-arrow-left"></i>
+            <div class="playlist-header-mobile" style="display: flex; align-items: center; gap: 1rem; justify-content: space-between;">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <button id="back-to-library-btn" style="background:none; border:none; color:var(--text-primary); font-size:1.2rem; cursor:pointer;">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h2 style="margin:0; font-size:1.2rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px;">${decodeHtml(playlistName)}</h2>
+                </div>
+                <button id="delete-playlist-btn-mobile" style="background:none; color:#ff4444; border:none; font-size:1.2rem; cursor:pointer;">
+                    <i class="fas fa-trash"></i>
                 </button>
-                <h2 style="margin:0;">${decodeHtml(playlistName)}</h2>
             </div>
              ${songs.length === 0 ? '<p style="color:var(--text-secondary); padding: 1rem;">Belum ada lagu di playlist ini.</p>' : `<div class="song-grid">${gridHTML}</div>`}
         </section>`;
@@ -230,18 +252,46 @@ export const renderPlaylistPage = (playlistName, songs) => {
 
 // Update Tampilan Lirik
 export const updateLyricsDisplay = async (artist, title) => {
-    if (!DOM.lyricsText) return;
-    
-    const cleanedTitle = cleanSongTitle(title);
-    DOM.lyricsText.textContent = `Mencari lirik untuk "${cleanedTitle}"...`;
-    
-    const lyrics = await fetchLyrics(artist, cleanedTitle);
-    DOM.lyricsText.textContent = lyrics || 'Lirik untuk lagu ini tidak tersedia.';
+  if (!DOM.lyricsText) return;
+
+  const cleanedTitle = cleanSongTitle(title);
+  DOM.lyricsText.textContent = `Mencari lirik untuk "${cleanedTitle}"...`;
+
+  const lyrics = await fetchLyrics(artist, cleanedTitle);
+  DOM.lyricsText.textContent = lyrics || "Lirik untuk lagu ini tidak tersedia.";
 };
 
 // Tampilkan Loading
 export const showLoader = () => {
-    const loaderHTML = '<div class="loader"></div>';
-    DOM.mainContent.innerHTML = loaderHTML;
-    DOM.mainContentMobile.innerHTML = loaderHTML;
+  const loaderHTML = '<div class="loader"></div>';
+  DOM.mainContent.innerHTML = loaderHTML;
+  DOM.mainContentMobile.innerHTML = loaderHTML;
+};
+
+// Toast Notification System
+export const showToast = (message, type = 'success') => {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let iconClass = 'fa-info-circle';
+    if (type === 'success') iconClass = 'fa-check-circle';
+    if (type === 'error') iconClass = 'fa-exclamation-circle';
+
+    toast.innerHTML = `
+        <i class="fas ${iconClass}"></i>
+        <span style="font-size:0.9rem; font-weight:500;">${message}</span>
+    `;
+
+    container.appendChild(toast);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        toast.style.animation = 'toastFadeOut 0.3s forwards';
+        toast.addEventListener('animationend', () => {
+            if (toast.parentElement) toast.remove();
+        });
+    }, 3000);
 };

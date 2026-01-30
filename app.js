@@ -232,12 +232,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Setup listener elemen baru
                     setupGlobalListeners(); 
 
-                    // Load ke player jika ada lagu
-                    if (playlist.songs.length > 0) {
-                        player.loadPlaylist(playlist.songs, `user-playlist-${playlistName}`);
-                        activePlaylistSource = `user-playlist-${playlistName}`;
-                        player.playAt(0); 
-                    }
+                    // HAPUS AUTOPLAY: Biarkan user pilih lagu sendiri
+                    // if (playlist.songs.length > 0) {
+                    //    player.loadPlaylist(playlist.songs, `user-playlist-${playlistName}`);
+                    //    activePlaylistSource = `user-playlist-${playlistName}`;
+                    //    player.playAt(0); 
+                    // }
                 } else {
                     alert('Playlist ini kosong!');
                 }
@@ -417,20 +417,121 @@ document.addEventListener('DOMContentLoaded', () => {
         // ===============================================
     };
 
+    // === 7. CUSTOM MODAL HELPER ===
+    const showConfirmModal = (title, message, onConfirm) => {
+        const modal = document.getElementById('confirm-modal');
+        const titleEl = document.getElementById('confirm-title');
+        const msgEl = document.getElementById('confirm-message');
+        const yesBtn = document.getElementById('confirm-yes-btn');
+        const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+        if (!modal) return;
+
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        modal.classList.remove('hidden');
+
+        // Reset previous listeners (cloneNode trick)
+        const newYesToken = yesBtn.cloneNode(true);
+        const newCancelToken = cancelBtn.cloneNode(true);
+        yesBtn.parentNode.replaceChild(newYesToken, yesBtn);
+        cancelBtn.parentNode.replaceChild(newCancelToken, cancelBtn);
+
+        // Add new listeners
+        newYesToken.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            onConfirm();
+        });
+
+        newCancelToken.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+        
+        // Close on outside click is handled by generic modal listener if added, 
+        // but let's add specific one for safety here if needed or reuse existing
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+    };
+
     // GLOBAL DELEGATION (Menangani klik di elemen dinamis)
     document.body.addEventListener('click', (e) => {
-        // 1. Klik Lagu di Grid
-        const songItem = e.target.closest('.song-item-grid');
-        if (songItem) {
-            const index = parseInt(songItem.dataset.index);
-            const source = songItem.dataset.playlist;
-            handleSongClick(index, source);
+        // console.log('Click detected on:', e.target); // Debug toggle
+        
+        // --- PRIORITAS TINGGI: Tombol Aksi Spesifik ---
+
+        // 9. Delete Playlist (Desktop & Mobile)
+        const btnDeletePlaylist = e.target.closest('#delete-playlist-btn') || e.target.closest('#delete-playlist-btn-mobile');
+        if (btnDeletePlaylist) {
+            e.preventDefault();
+            const playlistNameMatch = document.querySelector('.playlist-header h2') || document.querySelector('.playlist-header-mobile h2');
+            if (playlistNameMatch) {
+                let currentName = playlistNameMatch.textContent.replace('Playlist: ', '').trim();
+                
+                showConfirmModal(
+                    'Hapus Playlist', 
+                    `Yakin ingin menghapus playlist "${currentName}"?`, 
+                    () => {
+                        userPlaylistsData = userPlaylistsData.filter(p => p.name !== currentName);
+                        saveUserPlaylists();
+                        initApp(); 
+                    }
+                );
+            }
+            return; // Stop here
+        }
+
+        // 6. Tombol Back di Mobile Playlist
+        if (e.target.closest('#back-to-library-btn')) {
+            e.preventDefault();
+            UI.renderLibraryPage(userPlaylistsData);
             return;
         }
+
+        // 7. Tombol Back di Desktop Playlist (Kembali ke Home)
+        if (e.target.closest('#back-to-home-desktop-btn')) {
+            e.preventDefault();
+            initApp();
+            return;
+        }
+
+        // 10. Remove Song from Playlist
+        const btnRemoveSong = e.target.closest('.remove-song-btn');
+        if (btnRemoveSong) {
+            e.preventDefault();
+            e.stopPropagation(); 
+            
+            const index = parseInt(btnRemoveSong.dataset.index);
+            const playlistName = btnRemoveSong.dataset.playlist.replace('user-playlist-', '');
+            
+            showConfirmModal(
+                'Hapus Lagu',
+                'Hapus lagu ini dari playlist?',
+                () => {
+                    const playlistIndex = userPlaylistsData.findIndex(p => p.name === playlistName);
+                    if (playlistIndex !== -1) {
+                        userPlaylistsData[playlistIndex].songs.splice(index, 1);
+                        saveUserPlaylists();
+                        UI.renderPlaylistPage(playlistName, userPlaylistsData[playlistIndex].songs);
+                    }
+                }
+            );
+            return; // Stop here
+        }
+        
+        // --- PRIORITAS MENENGAH: Tombol Navigasi/Player ---
 
         // 2. Tombol Player (Play, Next, Prev, Shuffle, Repeat)
         const btnTarget = e.target.closest('button');
         if (btnTarget) {
+            // Cek apakah ini tombol hapus yang sudah dihandle di atas?
+            // Jika classnya remove-song-btn atau id delete-playlist, sudah dihandle.
+            // Jika classnya remove-song-btn atau id delete-playlist, sudah dihandle.
+            if (btnTarget.classList.contains('remove-song-btn') || 
+                btnTarget.id.includes('delete-playlist') || 
+                btnTarget.id.includes('confirm-') ||
+                btnTarget.id.includes('back-to-')) return; 
+
             const id = btnTarget.id;
             if (id.includes('play-pause')) player.togglePlay();
             else if (id.includes('next')) player.next();
@@ -485,10 +586,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 6. Tombol Back di Mobile Playlist
-        if (e.target.closest('#back-to-library-btn')) {
+        // 5. Klik Playlist di Mobile Library
+        
+        // 8. Sidebar Navigation (Desktop)
+        const sidebarLink = e.target.closest('.main-nav li a');
+        if (sidebarLink) {
             e.preventDefault();
-            UI.renderLibraryPage(userPlaylistsData);
+            const li = sidebarLink.parentElement;
+            const text = sidebarLink.textContent.trim().toLowerCase();
+            if (text.includes('home')) {
+                document.querySelectorAll('.main-nav li').forEach(el => el.classList.remove('active'));
+                li.classList.add('active');
+                initApp();
+            }
+        }
+
+        // --- PRIORITAS RENDAH: Container Besar ---
+
+        // 1. Klik Lagu di Grid (Dipindahkan ke paling bawah agar tidak memblokir tombol di dalamnya)
+        // KECUALI tombol hapus sudah dihandle di atas dengan return.
+        const songItem = e.target.closest('.song-item-grid');
+        if (songItem) {
+            const index = parseInt(songItem.dataset.index);
+            const source = songItem.dataset.playlist;
+            handleSongClick(index, source);
+            return;
         }
     });
 
@@ -507,4 +629,17 @@ document.addEventListener('DOMContentLoaded', () => {
     setupGlobalListeners();
     setupPlaylistListeners();
     initApp();
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        });
+    }
 });
